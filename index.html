@@ -1,0 +1,3847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
+<title>Workify</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16A34A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Workify">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --bg:#F3F7FB;
+    --card:#FFFFFF;
+    --ink:#122032;
+    --sub:#5E7089;
+    --sub-light:#93A3B8;
+    --green:#16A34A;
+    --green-dark:#0F7A38;
+    --green-soft:#DCFCE7;
+    --blue:#2563EB;
+    --blue-dark:#1D4ED8;
+    --blue-soft:#DBEAFE;
+    --whatsapp:#25D366;
+    --yellow:#EAB308;
+    --yellow-dark:#A16207;
+    --yellow-soft:#FEF9C3;
+    --orange:#EAB308;
+    --orange-soft:#FEF9C3;
+    --purple:#2563EB;
+    --purple-soft:#DBEAFE;
+    --red:#DC2626;
+    --red-soft:#FEE2E2;
+    --line:#DCE6F0;
+    --spring:cubic-bezier(0.32,0.72,0,1);
+  }
+  *{box-sizing:border-box; -webkit-font-smoothing:antialiased;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,"SF Pro Text",system-ui,Roboto,"Segoe UI",Arial,sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+    overflow-x:hidden;
+  }
+  .screen{display:none; min-height:100vh; padding-bottom:118px; position:relative;}
+  .screen.active{display:block;}
+
+  @keyframes pushIn{ from{transform:translateX(100%);} to{transform:translateX(0);} }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  .screen.anim-push{ animation:pushIn 0.36s var(--spring); }
+  .screen.anim-fade{ animation:fadeUp 0.26s var(--spring); }
+
+  button{font-family:inherit;}
+  button, .card, .nav-btn, .icon-btn, .pill, .check-circle, .seg button, .folder-card, .profile-row, .qr-row{
+    transition:transform 0.15s var(--spring), background-color 0.15s ease, opacity 0.15s ease;
+  }
+  button:active, .card:active, .nav-btn:active, .icon-btn:active, .pill:active, .check-circle:active,
+  .folder-card:active, .profile-row:active, .qr-row:active{
+    transform:scale(0.97);
+  }
+
+  /* ===== TOP BAR (shared) ===== */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 18px 4px;
+  }
+  .topbar .tleft{display:flex; align-items:center; gap:10px;}
+  .menu-btn, .icon-btn{
+    background:var(--card);
+    border:1px solid var(--line);
+    width:40px;height:40px;
+    border-radius:12px;
+    font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .topbar h2{font-size:19px; font-weight:800; margin:0;}
+  .topbar .tright{display:flex; gap:8px;}
+
+  /* ===== HOME ===== */
+  .home-greet{padding:14px 18px 6px;}
+  .home-greet .hello{font-size:21px; font-weight:800; color:var(--ink);}
+  .home-greet .hello .docname{color:var(--green-dark);}
+  .home-greet .hdate{font-size:13.5px; color:var(--sub); margin-top:3px; font-weight:500;}
+
+  .stat-pair{display:flex; gap:12px; padding:16px 18px 6px;}
+  .stat-card{
+    flex:1;
+    border-radius:18px;
+    padding:16px 16px;
+  }
+  .stat-card.plain{background:var(--card); border:1px solid var(--line);}
+  .stat-card.filled{background:linear-gradient(135deg, var(--blue), var(--blue-dark)); color:#fff;}
+  .stat-card .sc-label{font-size:12.5px; font-weight:700; opacity:0.85;}
+  .stat-card.plain .sc-label{color:var(--sub);}
+  .stat-card .sc-value{font-size:24px; font-weight:800; margin-top:6px;}
+  .stat-card .sc-sub{font-size:11.5px; margin-top:4px; opacity:0.85;}
+
+  .section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 18px 10px;
+  }
+  .section-head h3{font-size:17px; font-weight:800; margin:0;}
+  .section-head .link{font-size:13px; font-weight:700; color:var(--green-dark); cursor:pointer;}
+
+  /* ===== SEGMENTED TABS ===== */
+  .seg{
+    display:flex;
+    gap:6px;
+    padding:0 18px 14px;
+    overflow-x:auto;
+  }
+  .seg button{
+    flex-shrink:0;
+    border:1px solid var(--line);
+    background:var(--card);
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--sub);
+    cursor:pointer;
+  }
+  .seg button.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  /* ===== VISIT CARD ===== */
+  .list-wrap{padding:0 18px;}
+  .day-label{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    color:var(--sub-light);
+    font-weight:700;
+    margin:16px 2px 8px;
+  }
+  .vcard{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  .vcard-top{display:flex; gap:12px; cursor:pointer;}
+  .avatar{
+    width:48px;height:48px;
+    border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;
+    font-weight:800;
+    font-size:18px;
+    flex-shrink:0;
+  }
+  .vcard-info{flex:1; min-width:0;}
+  .vcard-info .vname{font-size:16.5px; font-weight:800; color:var(--ink);}
+  .vcard-info .vmeta{font-size:13px; color:var(--sub); margin-top:3px;}
+  .vcard-info .vtime{font-size:12px; color:var(--sub-light); margin-top:2px; font-weight:600;}
+  .vcard-fee{font-size:15px; font-weight:800; color:var(--green); white-space:nowrap; flex-shrink:0;}
+  .vcard-actions{display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
+  .mini-action{
+    flex:1;
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    border:none;
+    border-radius:10px;
+    padding:9px 4px;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .mini-action.call{background:var(--green-soft); color:var(--green-dark);}
+  .mini-action.wa{background:#DCFCE7; color:#128C3E;}
+  .mini-action.map{background:var(--blue-soft); color:var(--blue);}
+  .vcard.done .vname{color:var(--sub-light); text-decoration:line-through;}
+
+  .empty{
+    text-align:center;
+    padding:50px 20px;
+    color:var(--sub-light);
+  }
+  .empty .big-emoji{font-size:46px;margin-bottom:12px;}
+  .empty .msg{font-size:15.5px; white-space:pre-line; line-height:1.5;}
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-top:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    z-index:25;
+    padding-bottom:env(safe-area-inset-bottom, 0);
+  }
+  .nav-btn{
+    flex:1;
+    background:none;
+    border:none;
+    padding:10px 4px 8px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    cursor:pointer;
+    color:var(--sub-light);
+  }
+  .nav-btn .nicon{font-size:21px;}
+  .nav-btn .nlbl{font-size:10.5px;font-weight:700;}
+  .nav-btn.active{color:var(--green-dark);}
+  .nav-fab{
+    width:54px;height:54px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--green), var(--green-dark));
+    color:#fff;
+    font-size:28px;
+    border:none;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    margin-top:-22px;
+    box-shadow:0 6px 16px rgba(22,163,74,0.4);
+    flex-shrink:0;
+  }
+
+  /* ===== DRAWER ===== */
+  .drawer-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.35);
+    z-index:50;
+    display:none;
+  }
+  .drawer-overlay.open{display:block;}
+  .drawer{
+    position:fixed; top:0; left:0; bottom:0;
+    width:78%; max-width:300px;
+    background:#fff;
+    z-index:51;
+    transform:translateX(-100%);
+    transition:transform 0.3s var(--spring);
+    padding:26px 18px;
+    overflow-y:auto;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-title{font-size:20px; font-weight:800; margin-bottom:18px;}
+  .drawer-item{
+    display:flex; align-items:center; gap:14px;
+    padding:13px 8px;
+    border-radius:12px;
+    cursor:pointer;
+    font-size:15.5px;
+    font-weight:600;
+  }
+  .drawer-item:active{background:var(--bg);}
+  .drawer-item .dicon{font-size:19px; width:24px; text-align:center;}
+
+  /* ===== FORM ===== */
+  .form-wrap{padding:18px;}
+  label{
+    display:block;
+    font-size:14px;
+    font-weight:700;
+    color:var(--ink);
+    margin:16px 0 6px;
+  }
+  input,textarea,select{
+    width:100%;
+    font-size:16px;
+    padding:13px 14px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--green); outline-offset:1px; border-color:var(--green);}
+  textarea{resize:vertical;min-height:76px;}
+  .row2{display:flex;gap:12px;}
+  .row2 > div{flex:1;}
+
+  .btn{
+    width:100%;
+    padding:15px;
+    font-size:16px;
+    font-weight:700;
+    border:none;
+    border-radius:14px;
+    margin-top:22px;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--green); color:#fff;}
+  .btn-primary:active{background:var(--green-dark);}
+  .btn-danger{background:var(--red-soft); color:var(--red);}
+  .btn-secondary{background:var(--bg); color:var(--ink); border:1px solid var(--line);}
+
+  .backbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:18px 16px 4px;
+  }
+  .backbtn{
+    background:none;border:none;
+    font-size:24px;
+    color:var(--ink);
+    cursor:pointer;
+    padding:4px 8px;
+  }
+  .backbar .title{font-size:18px; font-weight:800; flex:1;}
+  .backbar .spacer{flex:1;}
+
+  /* ===== DETAIL ===== */
+  .detail-hero{padding:10px 18px 0; text-align:center;}
+  .detail-avatar{
+    width:74px;height:74px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;
+    font-weight:800;
+    font-size:28px;
+    margin:0 auto 12px;
+  }
+  .detail-name{font-size:22px; font-weight:800;}
+  .detail-sub{font-size:14px; color:var(--sub); margin-top:4px;}
+  .action-row{display:flex; gap:10px; padding:18px 18px 4px;}
+  .action-btn{
+    flex:1;
+    border:none;
+    border-radius:16px;
+    padding:14px 6px;
+    font-size:13px;
+    font-weight:700;
+    text-align:center;
+    text-decoration:none;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    cursor:pointer;
+  }
+  .action-btn .em{font-size:21px;}
+  .action-btn.call{background:var(--green-soft); color:var(--green-dark);}
+  .action-btn.wa{background:#DCFCE7; color:#128C3E;}
+  .action-btn.map{background:var(--blue-soft); color:var(--blue);}
+
+  .detail-block{
+    margin:14px 18px 0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px 16px;
+  }
+  .detail-block .label{font-size:11.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--sub-light); font-weight:700;}
+  .detail-block .value{font-size:16px; margin-top:5px; color:var(--ink); line-height:1.4;}
+  .detail-block .value.money{color:var(--green); font-weight:800;}
+
+  .pill{
+    display:inline-block;
+    padding:11px 22px;
+    border-radius:22px;
+    background:var(--green-soft);
+    border:none;
+    color:var(--green-dark);
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+  }
+  .pill.done{background:var(--green); color:#fff;}
+
+  .strike{color:var(--sub-light); text-decoration:line-through;}
+  .check-circle{
+    width:26px;height:26px;
+    border-radius:50%;
+    border:2px solid var(--green);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    font-size:14px;
+    color:#fff;
+    cursor:pointer;
+  }
+  .check-circle.checked{background:var(--green);}
+
+  /* ===== EARNINGS ===== */
+  .earn-hero-card{
+    margin:14px 18px 0;
+    background:linear-gradient(135deg, var(--blue), var(--blue-dark));
+    border-radius:20px;
+    padding:20px 20px;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+  }
+  .earn-hero-card .el-label{font-size:13.5px; font-weight:700; opacity:0.9;}
+  .earn-hero-card .el-amt{font-size:28px; font-weight:800; margin-top:4px;}
+  .earn-hero-card .el-sub{font-size:12px; margin-top:4px; opacity:0.85;}
+  .earn-hero-card .el-icon{font-size:34px; opacity:0.9;}
+
+  .earn-white-card{
+    margin:12px 18px 0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+  }
+  .earn-white-card .el-label{font-size:13px; color:var(--sub); font-weight:700;}
+  .earn-white-card .el-amt{font-size:21px; font-weight:800; color:var(--ink); margin-top:4px;}
+  .earn-white-card .el-sub{font-size:11.5px; color:var(--sub-light); margin-top:3px;}
+
+  .txn-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:13px 14px;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .txn-row .tavatar{
+    width:42px;height:42px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:16px;flex-shrink:0;
+  }
+  .txn-row .tinfo{flex:1; min-width:0;}
+  .txn-row .tname{font-size:15px; font-weight:700; color:var(--ink);}
+  .txn-row .tmeta{font-size:12.5px; color:var(--sub-light); margin-top:2px;}
+  .txn-row .tamt{font-size:15px; font-weight:800; color:var(--green); flex-shrink:0;}
+  .txn-row .tamt.out{color:var(--blue);}
+  .txn-row .tdel{background:none; border:none; color:var(--red); font-size:17px; padding:4px; cursor:pointer;}
+
+  .balance-hero{
+    margin:14px 18px 0;
+    background:linear-gradient(135deg, var(--green), var(--green-dark));
+    border-radius:20px;
+    padding:20px;
+    color:#fff;
+    transition:background 0.3s ease;
+  }
+  .balance-hero.negative{background:linear-gradient(135deg, #DC2626, #991B1B);}
+  .balance-hero .bh-label{font-size:13px; font-weight:700; opacity:0.9;}
+  .balance-hero .bh-amt{font-size:30px; font-weight:800; margin-top:4px;}
+  .balance-hero .bh-sub{font-size:12.5px; margin-top:6px; opacity:0.9;}
+
+  .inout-pair{display:flex; gap:12px; margin:14px 18px 0;}
+  .inout-card{flex:1; background:var(--card); border-radius:16px; padding:14px; border:1.5px solid var(--line);}
+  .inout-card .ic-label{font-size:12px; font-weight:700; color:var(--sub);}
+  .inout-card .ic-amt{font-size:19px; font-weight:800; margin-top:3px;}
+  .inout-card.in .ic-amt{color:var(--green-dark);}
+  .inout-card.out .ic-amt{color:var(--blue-dark);}
+
+  .ledger-add-row{display:flex; gap:10px; padding:14px 18px 0;}
+  .ledger-add-row button{flex:1; margin-top:0;}
+
+  .ledger-type-seg{display:flex; gap:8px; margin-top:6px; margin-bottom:4px;}
+  .ledger-type-seg button{
+    flex:1; border:1.5px solid var(--line); background:var(--card);
+    padding:11px 4px; border-radius:12px; font-size:13.5px; font-weight:700;
+    color:var(--sub); cursor:pointer;
+  }
+  .ledger-type-seg button[data-t="in"].active{background:var(--green-soft); color:var(--green-dark); border-color:var(--green);}
+  .ledger-type-seg button[data-t="out"].active{background:var(--blue-soft); color:var(--blue-dark); border-color:var(--blue);}
+
+  /* ===== DARK MODE ===== */
+  [data-theme="dark"]{
+    --bg:#0B1220;
+    --card:#151F30;
+    --ink:#EAF1FB;
+    --sub:#93A3B8;
+    --sub-light:#5E7089;
+    --line:#233247;
+    --green-soft:#0F3320;
+    --blue-soft:#0F2647;
+    --yellow-soft:#3A2F06;
+    --red-soft:#3A1414;
+  }
+  [data-theme="dark"] .stat-card.plain{background:var(--card);}
+  [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea{
+    background:var(--card); color:var(--ink); border-color:var(--line);
+  }
+  [data-theme="dark"] .phone-cc{background:var(--card); color:var(--ink);}
+
+  /* ===== CUSTOM MODAL ===== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; z-index:500;
+    background:rgba(10,16,28,0.55);
+    align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-card{
+    background:var(--card); width:100%; max-width:480px;
+    border-radius:22px 22px 0 0; padding:24px 22px 26px;
+    animation:notifSlideDown 0.28s var(--spring);
+  }
+  .modal-card .m-icon{font-size:30px; margin-bottom:8px;}
+  .modal-card .m-title{font-size:17px; font-weight:800; color:var(--ink); margin-bottom:6px;}
+  .modal-card .m-msg{font-size:14px; color:var(--sub); line-height:1.5; margin-bottom:20px;}
+  .modal-card .m-btns{display:flex; gap:10px;}
+  .modal-card .m-btns button{flex:1; margin-top:0;}
+
+  /* ===== UNDO SNACKBAR ===== */
+  .undo-snack{
+    position:fixed; left:20px; right:20px; bottom:110px;
+    background:var(--ink); color:var(--bg);
+    padding:12px 12px 12px 16px; border-radius:14px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    font-size:13.5px; font-weight:700;
+    z-index:400;
+    box-shadow:0 8px 24px rgba(0,0,0,0.28);
+    animation:notifSlideDown 0.3s var(--spring);
+  }
+  .undo-snack button{
+    background:none; border:none; color:var(--blue); font-weight:800;
+    font-size:13.5px; padding:6px 8px; cursor:pointer; flex-shrink:0;
+  }
+
+  /* ===== FILTER CHIPS ===== */
+  .filter-chip-row{display:flex; gap:8px; padding:12px 18px 4px; overflow-x:auto;}
+  .filter-chip{
+    flex-shrink:0; padding:8px 14px; border-radius:20px;
+    border:1.5px solid var(--line); background:var(--card);
+    font-size:12.5px; font-weight:700; color:var(--sub); cursor:pointer;
+    white-space:nowrap;
+  }
+  .filter-chip.active{background:var(--blue); color:#fff; border-color:var(--blue);}
+
+  /* ===== CALENDAR ===== */
+  .cal-header{display:flex; align-items:center; justify-content:space-between; padding:14px 18px 4px;}
+  .cal-header .cal-nav{background:var(--card); border:1.5px solid var(--line); border-radius:10px; width:34px; height:34px; font-size:16px; cursor:pointer;}
+  .cal-header .cal-title{font-size:15.5px; font-weight:800;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; padding:10px 18px;}
+  .cal-dow{text-align:center; font-size:11px; font-weight:700; color:var(--sub-light); padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-radius:12px; font-size:13px; font-weight:700; color:var(--ink); cursor:pointer;
+    position:relative;
+  }
+  .cal-cell.other-month{color:var(--sub-light); opacity:0.4;}
+  .cal-cell.today{background:var(--yellow-soft); color:var(--yellow-dark);}
+  .cal-cell.selected{background:var(--blue); color:#fff;}
+  .cal-cell .cal-dot{width:5px; height:5px; border-radius:50%; background:var(--green); margin-top:2px;}
+  .cal-cell.selected .cal-dot{background:#fff;}
+
+  /* ===== CHART ===== */
+  .chart-card{margin:14px 18px 0; background:var(--card); border-radius:16px; padding:16px; border:1.5px solid var(--line);}
+  .chart-card .chart-title{font-size:13.5px; font-weight:700; color:var(--sub); margin-bottom:10px;}
+  .chart-legend{display:flex; gap:16px; margin-top:10px; font-size:12px; font-weight:700; color:var(--sub);}
+  .chart-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .chart-legend .dot{width:9px; height:9px; border-radius:50%;}
+
+  /* ===== CUSTOM PROFESSION CARD ===== */
+  .profession-card.custom-card{border-style:dashed;}
+
+  /* ===== TOUR DOTS ===== */
+  .tour-dot{width:7px; height:7px; border-radius:50%; background:var(--line);}
+  .tour-dot.active{background:var(--blue); width:20px; border-radius:4px;}
+
+  .add-cash-row{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--card);
+    border:1.5px dashed var(--line);
+    border-radius:16px;
+    padding:15px;
+    margin:14px 18px 0;
+    font-weight:700;
+    color:var(--green-dark);
+    cursor:pointer;
+  }
+
+  /* ===== FOLDERS ===== */
+  .folder-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:15px;
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    cursor:pointer;
+  }
+  .folder-icon{
+    width:46px;height:46px;
+    border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:21px;
+    flex-shrink:0;
+  }
+  .folder-card .finfo{flex:1; min-width:0;}
+  .folder-card .fname{font-size:16px; font-weight:800; color:var(--ink);}
+  .folder-card .fcount{font-size:13px; color:var(--sub); margin-top:2px;}
+  .folder-card .farrow{font-size:20px; color:var(--sub-light);}
+
+  /* ===== PROFILE ===== */
+  .profile-photo-wrap{
+    display:flex; flex-direction:column; align-items:center;
+    padding:24px 18px 8px;
+  }
+  .profile-photo{
+    width:92px;height:92px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--green), var(--green-dark));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;
+    font-size:34px;
+    font-weight:800;
+    position:relative;
+    cursor:pointer;
+    overflow:hidden;
+    border:3px solid #fff;
+    box-shadow:0 2px 10px rgba(0,0,0,0.12);
+  }
+  .profile-photo img{width:100%; height:100%; object-fit:cover;}
+  .photo-badge{
+    position:absolute;
+    bottom:-2px; right:-2px;
+    width:30px;height:30px;
+    border-radius:50%;
+    background:var(--ink);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+    border:2.5px solid #fff;
+  }
+  .profile-photo-wrap .pname{font-size:19px; font-weight:800; margin-top:14px;}
+  .profile-photo-wrap .pphone{font-size:13.5px; color:var(--sub); margin-top:3px;}
+
+  .profile-section-label{font-size:13px; font-weight:700; color:var(--sub); padding:18px 18px 4px;}
+  .profile-section-sub{font-size:12px; color:var(--sub-light); padding:0 18px 10px;}
+
+  .qr-row{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:13px 14px;
+    margin:0 18px 10px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    cursor:pointer;
+  }
+  .qr-row .qicon{
+    width:38px;height:38px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;
+    flex-shrink:0;
+    color:#fff;
+    font-weight:800;
+  }
+  .qr-row .qname{flex:1; font-size:15px; font-weight:700;}
+  .qr-row .qarrow{font-size:18px; color:var(--sub-light);}
+
+  .add-row{
+    display:flex; align-items:center; gap:10px;
+    margin:0 18px 16px;
+    padding:13px 14px;
+    border:1.5px dashed var(--line);
+    border-radius:14px;
+    color:var(--green-dark);
+    font-weight:700;
+    font-size:14.5px;
+    cursor:pointer;
+  }
+
+  .profile-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    margin:0 18px 14px;
+    overflow:hidden;
+  }
+  .profile-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:15px 16px;
+    cursor:pointer;
+    border-bottom:1px solid var(--line);
+  }
+  .profile-row:last-child{border-bottom:none;}
+  .profile-row .prow-left{display:flex;align-items:center;gap:12px;}
+  .profile-row .picon{font-size:18px;width:24px;text-align:center;}
+  .profile-row .plabel{font-size:15px;font-weight:700;color:var(--ink);}
+  .profile-row .parrow{font-size:17px;color:var(--sub-light);}
+
+  /* QR VIEW SCREEN */
+  .qr-display{
+    margin:20px 18px 0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:26px;
+    text-align:center;
+  }
+  .qr-display img{max-width:100%; max-height:340px; border-radius:14px;}
+  .qr-display .qr-display-name{margin-top:14px; font-size:17px; font-weight:800;}
+
+  /* SPLASH */
+  #screen-splash{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    background:linear-gradient(135deg, var(--green), var(--green-dark));
+    position:fixed;
+    inset:0;
+    z-index:999;
+  }
+  #screen-splash img{
+    width:96px;height:96px;
+    border-radius:24px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  }
+  #screen-splash .splash-name{
+    margin-top:18px;
+    font-size:24px;
+    font-weight:800;
+    color:#fff;
+  }
+  #screen-splash.fade-out{ animation:splashFade 0.4s ease forwards; }
+  @keyframes splashFade{ to{opacity:0; visibility:hidden;} }
+
+  .delete-icon-btn{
+    background:var(--red-soft);
+    border:none;
+    color:var(--red);
+    width:38px;height:38px;
+    border-radius:10px;
+    font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+
+  .info-banner{
+    margin:14px 18px 0;
+    background:var(--blue-soft);
+    color:var(--blue);
+    border-radius:14px;
+    padding:13px 15px;
+    font-size:13.5px;
+    line-height:1.5;
+    font-weight:600;
+  }
+
+  /* ===== ONBOARDING ===== */
+  #screen-onboard-1, #screen-onboard-2{
+    display:none;
+    min-height:100vh;
+    background:var(--bg);
+    position:fixed;
+    inset:0;
+    z-index:200;
+    overflow-y:auto;
+    padding-bottom:40px;
+  }
+  #screen-onboard-1.active, #screen-onboard-2.active{display:block;}
+  .ob-progress{display:flex; gap:6px; padding:22px 24px 0;}
+  .ob-progress .dot{flex:1; height:5px; border-radius:3px; background:var(--line);}
+  .ob-progress .dot.done{background:var(--green);}
+  .ob-hero{padding:22px 24px 6px;}
+  .ob-hero .ob-icon{font-size:38px; margin-bottom:10px;}
+  .ob-hero h1{font-size:24px; font-weight:800; margin:0 0 6px;}
+  .ob-hero p{font-size:14.5px; color:var(--sub); margin:0; line-height:1.5;}
+  .ob-photo-row{display:flex; justify-content:center; padding:18px 24px 0;}
+  .ob-photo{
+    width:88px;height:88px;
+    border-radius:50%;
+    background:var(--card);
+    border:2px dashed var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;
+    color:var(--sub-light);
+    cursor:pointer;
+    overflow:hidden;
+    position:relative;
+  }
+  .ob-photo img{width:100%;height:100%;object-fit:cover;}
+  .ob-photo .ob-photo-badge{
+    position:absolute; bottom:-2px; right:-2px;
+    width:26px;height:26px;border-radius:50%;
+    background:var(--ink); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px; border:2px solid var(--bg);
+  }
+  .profession-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:18px 24px 0;
+  }
+  .profession-card{
+    background:var(--card);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:16px 12px;
+    text-align:center;
+    cursor:pointer;
+  }
+  .profession-card .pc-icon{font-size:30px; margin-bottom:8px;}
+  .profession-card .pc-name{font-size:13.5px; font-weight:700; color:var(--ink); line-height:1.3;}
+  .profession-card.selected{border-color:var(--green); background:var(--green-soft);}
+  .ob-footer{padding:26px 24px 0;}
+  .ob-back{
+    display:block; text-align:center; margin-top:14px;
+    color:var(--sub); font-size:14px; font-weight:700; cursor:pointer;
+  }
+
+  /* ===== TASK PRIORITY ===== */
+  .priority-seg{display:flex; gap:8px; margin-top:6px;}
+  .priority-seg button{
+    flex:1;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    padding:10px 4px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--sub);
+    cursor:pointer;
+  }
+  .priority-seg button[data-p="high"].active{background:var(--red-soft); color:var(--red); border-color:var(--red);}
+  .priority-seg button[data-p="medium"].active{background:var(--orange-soft); color:var(--orange); border-color:var(--orange);}
+  .priority-seg button[data-p="low"].active{background:var(--green-soft); color:var(--green-dark); border-color:var(--green);}
+  .priority-dot{
+    width:9px;height:9px;border-radius:50%;
+    display:inline-block;
+    margin-right:5px;
+    flex-shrink:0;
+  }
+  .priority-dot.high{background:var(--red);}
+  .priority-dot.medium{background:var(--orange);}
+  .priority-dot.low{background:var(--green);}
+
+  /* ===== NOTIFICATION BANNER ===== */
+  @keyframes notifSlideDown{
+    from{opacity:0; transform:translateY(-14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .notif-banner{
+    margin:14px 18px 0;
+    background:linear-gradient(120deg, var(--yellow-soft), #FFFFFF 65%);
+    border:1.5px solid var(--yellow);
+    border-radius:16px;
+    padding:13px 14px;
+    display:flex;
+    align-items:flex-start;
+    gap:11px;
+    cursor:pointer;
+    animation:notifSlideDown 0.45s var(--spring);
+    box-shadow:0 4px 14px rgba(234,179,8,0.14);
+  }
+  .notif-banner.calm{
+    background:linear-gradient(120deg, var(--green-soft), #FFFFFF 65%);
+    border-color:var(--green);
+    box-shadow:0 4px 14px rgba(22,163,74,0.12);
+  }
+  .notif-banner .nb-icon{font-size:22px; line-height:1; flex-shrink:0; margin-top:1px;}
+  .notif-banner .nb-text{flex:1; min-width:0;}
+  .notif-banner .nb-title{font-size:13.5px; font-weight:800; color:var(--ink);}
+  .notif-banner .nb-body{font-size:12.5px; color:var(--sub); margin-top:2px; line-height:1.4;}
+  .notif-banner .nb-close{
+    font-size:12px; color:var(--sub-light); font-weight:700;
+    padding:2px 4px; flex-shrink:0; cursor:pointer;
+  }
+
+  /* ===== PHONE INPUT WITH COUNTRY CODE ===== */
+  .phone-row{
+    display:flex;
+    gap:8px;
+    margin-top:6px;
+  }
+  .phone-cc{
+    flex-shrink:0;
+    width:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    font-weight:700;
+    font-size:14.5px;
+    color:var(--ink);
+  }
+  .phone-row input{margin-top:0; flex:1;}
+  .field-error{
+    color:var(--red);
+    font-size:12px;
+    font-weight:600;
+    margin-top:5px;
+    display:none;
+  }
+  .field-error.show{display:block;}
+  input.err, textarea.err, select.err{border-color:var(--red) !important;}
+
+  /* ===== GENDER SELECT ===== */
+  .gender-seg{display:flex; gap:8px; margin-top:6px;}
+  .gender-seg button{
+    flex:1; border:1.5px solid var(--line); background:var(--card);
+    padding:10px 4px; border-radius:12px; font-size:13.5px; font-weight:700;
+    color:var(--sub); cursor:pointer;
+  }
+  .gender-seg button.active{background:var(--blue-soft); color:var(--blue); border-color:var(--blue);}
+
+  /* ===== PROGRESSIVE DISCLOSURE ===== */
+  .more-toggle{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:18px 0 4px;
+    padding:13px 14px;
+    background:var(--card);
+    border:1.5px dashed var(--line);
+    border-radius:14px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--blue);
+  }
+  .more-toggle .chev{transition:transform 0.25s var(--spring);}
+  .more-toggle.open .chev{transform:rotate(180deg);}
+  .more-details-wrap{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.32s var(--spring);
+  }
+  .more-details-wrap.open{max-height:1200px;}
+  .save-row{display:flex; gap:10px; margin-top:22px;}
+  .save-row .btn{margin-top:0; flex:1;}
+  .btn-toast{
+    position:fixed; left:20px; right:20px; bottom:110px;
+    background:var(--ink); color:#fff;
+    padding:13px 16px; border-radius:14px;
+    font-size:13.5px; font-weight:700;
+    text-align:center;
+    z-index:400;
+    box-shadow:0 8px 24px rgba(0,0,0,0.22);
+    animation:notifSlideDown 0.3s var(--spring);
+  }
+
+  /* ===== PHOTO CROP TOOL ===== */
+  #screen-photo-crop{
+    display:none;
+    position:fixed; inset:0; z-index:300;
+    background:#0B1220;
+    flex-direction:column;
+  }
+  #screen-photo-crop.active{display:flex;}
+  .crop-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px; color:#fff;
+  }
+  .crop-topbar span{font-weight:700; font-size:15px;}
+  .crop-topbar button{
+    background:none; border:none; color:#fff; font-size:14px; font-weight:700;
+    padding:6px 4px; cursor:pointer;
+  }
+  .crop-stage-wrap{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+    touch-action:none;
+  }
+  #cropCanvas{touch-action:none; cursor:grab; border-radius:50%; box-shadow:0 0 0 2000px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.9);}
+  .crop-controls{padding:18px 24px 30px;}
+  .crop-zoom-row{display:flex; align-items:center; gap:12px;}
+  .crop-zoom-row span{color:#fff; font-size:16px;}
+  .crop-zoom-row input[type="range"]{flex:1;}
+</style>
+</head>
+<body>
+
+<!-- ============ SPLASH SCREEN ============ -->
+<div id="screen-splash">
+  <img src="icons/icon-192.png" alt="Workify">
+  <div class="splash-name">Workify</div>
+</div>
+
+<!-- ============ ONBOARDING: PAGE 1 - YOUR INFO ============ -->
+<div id="screen-onboard-1">
+  <div class="ob-progress"><div class="dot done"></div><div class="dot"></div></div>
+  <div class="ob-hero">
+    <div class="ob-icon">👋</div>
+    <h1>Welcome to Workify</h1>
+    <p>Let's set things up. This only takes a minute, and everything stays on this phone.</p>
+  </div>
+  <div class="ob-photo-row">
+    <div class="ob-photo" id="obPhotoWrap" onclick="document.getElementById('obPhotoInput').click()">
+      <span id="obPhotoPlaceholder">📷</span>
+      <div class="ob-photo-badge">➕</div>
+    </div>
+    <input type="file" id="obPhotoInput" accept="image/*" style="display:none;" onchange="handleObPhotoFile(event)">
+  </div>
+  <div class="form-wrap" style="padding-top:8px;">
+    <label>Full Name *</label>
+    <input type="text" id="ob-name" placeholder="e.g. Munis Khan">
+    <div class="field-error" id="ob-name-err">Please enter your name.</div>
+
+    <label>Email *</label>
+    <input type="email" id="ob-email" placeholder="e.g. munis@example.com">
+    <div class="field-error" id="ob-email-err">Please enter a valid email.</div>
+
+    <label>Mobile Number *</label>
+    <div class="phone-row">
+      <div class="phone-cc">+91</div>
+      <input type="tel" id="ob-phone" placeholder="10-digit number" maxlength="10" inputmode="numeric" oninput="sanitizePhoneInput(this)">
+    </div>
+    <div class="field-error" id="ob-phone-err">Please enter a valid 10-digit number.</div>
+
+    <label>Business Name (optional)</label>
+    <input type="text" id="ob-business" placeholder="e.g. Munis Animal Care">
+
+    <label>Address (optional)</label>
+    <textarea id="ob-address" placeholder="Village / area / city"></textarea>
+
+    <label>Gender (optional)</label>
+    <div class="gender-seg" id="obGenderSeg">
+      <button type="button" data-g="male" onclick="setObGender('male')">Male</button>
+      <button type="button" data-g="female" onclick="setObGender('female')">Female</button>
+      <button type="button" data-g="other" onclick="setObGender('other')">Other</button>
+    </div>
+
+    <label>Date of Birth (optional)</label>
+    <input type="date" id="ob-dob">
+  </div>
+  <div class="ob-footer">
+    <button class="btn btn-primary" onclick="goOnboardStep2()">Continue</button>
+  </div>
+</div>
+
+<!-- ============ ONBOARDING: PAGE 2 - PROFESSION ============ -->
+<div id="screen-onboard-2">
+  <div class="ob-progress"><div class="dot done"></div><div class="dot done"></div></div>
+  <div class="ob-hero">
+    <div class="ob-icon">🧭</div>
+    <h1>What's your work?</h1>
+    <p>Workify will use the right words for your day-to-day — pick the one that fits best.</p>
+  </div>
+  <div class="profession-grid" id="professionGrid"></div>
+  <div class="ob-footer">
+    <button class="btn btn-primary" id="obFinishBtn" onclick="finishOnboarding()" disabled>Get Started</button>
+    <span class="ob-back" onclick="obBackClicked()">← Back</span>
+  </div>
+</div>
+
+<!-- ============ PHOTO CROP TOOL ============ -->
+<div id="screen-photo-crop">
+  <div class="crop-topbar">
+    <button onclick="cancelPhotoCrop()">Cancel</button>
+    <span>Adjust Photo</span>
+    <button onclick="confirmPhotoCrop()">Save</button>
+  </div>
+  <div class="crop-stage-wrap" id="cropStageWrap">
+    <canvas id="cropCanvas" width="320" height="320"></canvas>
+  </div>
+  <div class="crop-controls">
+    <div class="crop-zoom-row">
+      <span>🔍</span>
+      <input type="range" id="cropZoom" min="100" max="300" value="100" oninput="onCropZoomChange(this.value)">
+    </div>
+  </div>
+</div>
+
+<!-- ============ CUSTOM PROFESSION FORM ============ -->
+<div id="screen-custom-profession" style="display:none; position:fixed; inset:0; z-index:250; background:var(--bg); overflow-y:auto;">
+  <div class="ob-hero">
+    <div class="ob-icon">🧩</div>
+    <h1>Your Own Profession</h1>
+    <p>Tell us a bit about your work — Workify will use your words everywhere in the app.</p>
+  </div>
+  <div class="form-wrap">
+    <label>Profession Name *</label>
+    <input type="text" id="cp-name" placeholder="e.g. Tailor, Photographer, Electrician">
+    <div class="field-error" id="cp-name-err">Please enter a profession name.</div>
+
+    <label>What do you call your customers/visits? *</label>
+    <input type="text" id="cp-visits" placeholder="e.g. Customers, Orders, Clients">
+    <div class="field-error" id="cp-visits-err">Please fill this in.</div>
+
+    <label>What do you call your groups/folders? *</label>
+    <input type="text" id="cp-folders" placeholder="e.g. Categories, Projects, Groups">
+    <div class="field-error" id="cp-folders-err">Please fill this in.</div>
+
+    <label>What do you call your income? *</label>
+    <input type="text" id="cp-earnings" placeholder="e.g. Earnings, Income, Sales">
+    <div class="field-error" id="cp-earnings-err">Please fill this in.</div>
+
+    <label>One extra detail you track (optional)</label>
+    <input type="text" id="cp-extra" placeholder="e.g. Fabric Type, Service, Item">
+
+    <button class="btn btn-primary" onclick="saveCustomProfession()">Save &amp; Continue</button>
+    <span class="ob-back" onclick="cancelCustomProfession()">← Back</span>
+  </div>
+</div>
+
+<!-- ============ NEW USER TOUR ============ -->
+<div id="screen-tour" style="display:none; position:fixed; inset:0; z-index:260; background:var(--bg); flex-direction:column;">
+  <div style="display:flex; justify-content:flex-end; padding:16px 20px 0;">
+    <span class="ob-back" style="margin-top:0;" onclick="skipTour()">Skip ✕</span>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 32px; text-align:center;">
+    <div id="tourIcon" style="font-size:64px; margin-bottom:22px;">➕</div>
+    <div id="tourTitle" style="font-size:21px; font-weight:800; color:var(--ink); margin-bottom:10px;">Quick Add</div>
+    <div id="tourMsg" style="font-size:14.5px; color:var(--sub); line-height:1.6; max-width:320px;">Add a visit in seconds. Use "Save & Add Another" to log several back-to-back without leaving the form.</div>
+  </div>
+  <div style="display:flex; justify-content:center; gap:7px; padding-bottom:18px;" id="tourDots"></div>
+  <div class="ob-footer">
+    <button class="btn btn-primary" id="tourNextBtn" onclick="nextTourSlide()">Next</button>
+  </div>
+</div>
+
+<!-- ============ CUSTOM MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-card">
+    <div class="m-icon" id="modalIcon">⚠️</div>
+    <div class="m-title" id="modalTitle">Are you sure?</div>
+    <div class="m-msg" id="modalMsg">This action cannot be undone.</div>
+    <div class="m-btns" id="modalBtns">
+      <button class="btn btn-secondary" id="modalCancelBtn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn" onclick="modalConfirmAction()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DRAWER MENU ============ -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-title">Menu</div>
+  <div class="drawer-item" onclick="closeDrawer(); showScreen('screen-search');"><span class="dicon">🔍</span> <span id="i18n-search">Search</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); openCalendar();"><span class="dicon">📅</span> <span id="i18n-calendar">Calendar</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); showScreen('screen-folders');"><span class="dicon">🗂️</span> <span id="drawerFoldersLabel">Folders</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); showScreen('screen-tasks');"><span class="dicon">✅</span> <span id="i18n-tasks">Tasks</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); showScreen('screen-backup');"><span class="dicon">☁️</span> <span id="i18n-backup-restore">Backup &amp; Restore</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); showScreen('screen-settings');"><span class="dicon">⚙️</span> <span id="i18n-settings">Settings</span></div>
+  <div class="drawer-item" onclick="closeDrawer(); showAboutModal();"><span class="dicon">ℹ️</span> <span id="i18n-about">About Workify</span></div>
+</div>
+
+<!-- ============ HOME SCREEN ============ -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div class="tleft">
+      <button class="menu-btn" onclick="openDrawer()">☰</button>
+    </div>
+    <div class="tright">
+      <button class="icon-btn" onclick="showScreen('screen-search')">🔍</button>
+    </div>
+  </div>
+  <div class="home-greet">
+    <div class="hello" id="greetEmoji">Good Morning, <span class="docname" id="ownerName" onclick="editOwnerName()">Doctor Ji</span></div>
+    <div class="hdate" id="todayDate"></div>
+  </div>
+
+  <div class="notif-banner" id="notifBanner" style="display:none;" onclick="showScreen(notifBannerTarget)">
+    <div class="nb-icon" id="notifBannerIcon">🔔</div>
+    <div class="nb-text">
+      <div class="nb-title" id="notifBannerTitle"></div>
+      <div class="nb-body" id="notifBannerBody"></div>
+    </div>
+    <div class="nb-close" onclick="event.stopPropagation(); dismissNotifBanner();">✕</div>
+  </div>
+
+  <div class="stat-pair">
+    <div class="stat-card plain">
+      <div class="sc-label" id="statVisitsLabel">Today's Visits</div>
+      <div class="sc-value" id="statToday">0</div>
+      <div class="sc-sub" id="statUpcomingSub">0 upcoming</div>
+    </div>
+    <div class="stat-card filled">
+      <div class="sc-label" id="statEarningsLabel">Today's Earnings</div>
+      <div class="sc-value" id="statTodayEarn">₹0</div>
+      <div class="sc-sub" id="statTodayEarnSub">From 0 visits</div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h3 id="homeSectionTitle">Today's Visits</h3>
+    <span class="link" onclick="goTab('visits')">See All</span>
+  </div>
+  <div class="list-wrap" id="homeListWrap"></div>
+</div>
+
+<!-- ============ VISITS SCREEN (FULL LIST W/ TABS) ============ -->
+<div class="screen" id="screen-visits">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2 id="visitsScreenTitle">Visits</h2></div>
+    <div class="tright"><button class="icon-btn" onclick="showScreen('screen-search')">🔍</button></div>
+  </div>
+  <div class="seg" style="padding-top:14px;">
+    <button id="vtab-all" class="active" onclick="setVisitTab('all')">All</button>
+    <button id="vtab-today" onclick="setVisitTab('today')">Today</button>
+    <button id="vtab-tomorrow" onclick="setVisitTab('tomorrow')">Tomorrow</button>
+    <button id="vtab-completed" onclick="setVisitTab('completed')">Completed</button>
+  </div>
+  <div class="list-wrap" id="listWrap"></div>
+</div>
+
+<!-- ============ ADD / EDIT VISIT FORM ============ -->
+<div class="screen" id="screen-form">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-home')">←</button>
+    <div class="title" id="formTitle">New Visit</div>
+  </div>
+  <div class="form-wrap">
+    <label>Name *</label>
+    <input type="text" id="f-name" placeholder="e.g. Ramesh Kumar">
+    <div class="field-error" id="f-name-err">Please enter a name.</div>
+
+    <label>Phone Number</label>
+    <div class="phone-row">
+      <div class="phone-cc">+91</div>
+      <input type="tel" id="f-phone" placeholder="10-digit number" maxlength="10" inputmode="numeric" oninput="sanitizePhoneInput(this)">
+    </div>
+    <div class="field-error" id="f-phone-err">Please enter a valid 10-digit number.</div>
+
+    <label>Address</label>
+    <textarea id="f-address" placeholder="Village / landmark / how to reach"></textarea>
+
+    <label>Date</label>
+    <input type="date" id="f-date">
+
+    <label id="feeFieldLabel">Money to take (₹)</label>
+    <input type="number" id="f-fee" placeholder="e.g. 500" inputmode="decimal">
+
+    <div class="more-toggle" id="moreToggle" onclick="toggleMoreDetails()">
+      <span>➕ Add More Details (time, <span id="moreToggleExtra">animal</span>, folder, notes)</span>
+      <span class="chev">⌄</span>
+    </div>
+    <div class="more-details-wrap" id="moreDetailsWrap">
+      <label id="extraFieldLabel">Animal</label>
+      <input type="text" id="f-animal" placeholder="e.g. Goat, Sheep">
+
+      <label>Time</label>
+      <input type="time" id="f-time">
+
+      <label id="taskFieldLabel">Task (what needs to be done)</label>
+      <input type="text" id="f-task" placeholder="e.g. Vaccination, Checkup">
+
+      <label>Folder (optional)</label>
+      <select id="f-folder"><option value="">No folder</option></select>
+
+      <label>Notes (optional)</label>
+      <textarea id="f-notes" placeholder="Anything else to remember"></textarea>
+    </div>
+
+    <div class="save-row">
+      <button class="btn btn-primary" onclick="saveVisit('close')">Save</button>
+      <button class="btn btn-secondary" id="saveAnotherBtn" onclick="saveVisit('another')">Save &amp; Add Another</button>
+    </div>
+    <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteVisit()">Delete This Visit</button>
+  </div>
+</div>
+
+<!-- ============ VISIT DETAILS SCREEN ============ -->
+<div class="screen" id="screen-detail">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-home')">←</button>
+    <div class="spacer"></div>
+    <button class="delete-icon-btn" onclick="quickDeleteVisit()">🗑️</button>
+  </div>
+
+  <div class="detail-hero">
+    <div class="detail-avatar" id="d-avatar"></div>
+    <div class="detail-name" id="d-name"></div>
+    <div class="detail-sub" id="d-animal"></div>
+  </div>
+
+  <div class="action-row">
+    <a class="action-btn call" id="d-callbtn" href="#"><span class="em">📞</span> Call</a>
+    <a class="action-btn wa" id="d-whatsappbtn" href="#" target="_blank"><span class="em">💬</span> WhatsApp</a>
+    <a class="action-btn map" id="d-mapbtn" href="#" target="_blank"><span class="em">📍</span> Directions</a>
+  </div>
+
+  <div class="detail-block"><div class="label">When</div><div class="value" id="d-when"></div></div>
+  <div class="detail-block" id="d-task-block"><div class="label" id="d-task-label">Task</div><div class="value" id="d-task"></div></div>
+  <div class="detail-block" id="d-fee-block"><div class="label" id="d-fee-label">Money to take</div><div class="value money" id="d-fee"></div></div>
+  <div class="detail-block"><div class="label">Phone Number</div><div class="value" id="d-phone"></div></div>
+  <div class="detail-block"><div class="label">Address</div><div class="value" id="d-address"></div></div>
+  <div class="detail-block" id="d-notes-block"><div class="label">Notes</div><div class="value" id="d-notes"></div></div>
+
+  <div style="text-align:center; margin:18px 16px 0;">
+    <span class="pill" id="d-donepill" onclick="toggleDone()">Mark as Done</span>
+  </div>
+  <div class="form-wrap">
+    <button class="btn btn-secondary" onclick="editVisit()">✏️ Edit Visit</button>
+  </div>
+</div>
+
+<!-- ============ SEARCH SCREEN ============ -->
+<div class="screen" id="screen-search">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-home')">←</button>
+    <div class="title" id="i18n-search-title">Search</div>
+  </div>
+  <div class="form-wrap" style="padding-top:0;">
+    <input type="text" id="searchInput" placeholder="Type a name..." oninput="renderSearch()" style="margin-top:8px;">
+  </div>
+  <div class="filter-chip-row">
+    <div class="filter-chip active" data-f="all" onclick="setSearchFilter('all')" id="i18n-filter-all">All</div>
+    <div class="filter-chip" data-f="today" onclick="setSearchFilter('today')" id="i18n-filter-today">Today</div>
+    <div class="filter-chip" data-f="upcoming" onclick="setSearchFilter('upcoming')" id="i18n-filter-upcoming">Upcoming</div>
+    <div class="filter-chip" data-f="completed" onclick="setSearchFilter('completed')" id="i18n-filter-completed">Completed</div>
+  </div>
+  <div class="form-wrap" style="padding-top:10px; padding-bottom:0;">
+    <select id="searchFolderFilter" onchange="renderSearch()" style="margin-top:0;">
+      <option value="">All Folders</option>
+    </select>
+  </div>
+  <div class="list-wrap" id="searchResults"></div>
+</div>
+
+<!-- ============ TASKS SCREEN ============ -->
+<div class="screen" id="screen-tasks">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2>Tasks</h2></div>
+  </div>
+  <div class="seg" style="padding-top:14px;">
+    <button id="tasktab-upcoming" class="active" onclick="setTaskTab('upcoming')"><span id="i18n-todo">To Do</span></button>
+    <button id="tasktab-done" onclick="setTaskTab('done')"><span id="i18n-done">Done</span></button>
+  </div>
+  <div class="list-wrap" id="taskListWrap"></div>
+  <div class="form-wrap" style="padding-top:0;">
+    <button class="btn btn-primary" onclick="openAddTaskForm()">+ Add Task</button>
+  </div>
+</div>
+
+<!-- ============ ADD / EDIT TASK FORM ============ -->
+<div class="screen" id="screen-task-form">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-tasks')">←</button>
+    <div class="title" id="taskFormTitle">New Task</div>
+  </div>
+  <div class="form-wrap">
+    <label>What needs to be done</label>
+    <input type="text" id="t-title" placeholder="e.g. Buy medicine from shop">
+    <div class="field-error" id="t-title-err">Please enter the task.</div>
+    <label>Priority</label>
+    <div class="priority-seg" id="prioritySeg">
+      <button type="button" data-p="high" onclick="setTaskPriority('high')">🔴 High</button>
+      <button type="button" data-p="medium" onclick="setTaskPriority('medium')">🟠 Medium</button>
+      <button type="button" data-p="low" onclick="setTaskPriority('low')">🟢 Low</button>
+    </div>
+    <label>Date (optional)</label>
+    <input type="date" id="t-date">
+    <label>Money involved (₹) (optional)</label>
+    <input type="number" id="t-fee" placeholder="e.g. 200" inputmode="decimal">
+    <label>Notes (optional)</label>
+    <textarea id="t-notes" placeholder="Anything else to remember"></textarea>
+    <div class="save-row">
+      <button class="btn btn-primary" onclick="saveTask('close')">Save</button>
+      <button class="btn btn-secondary" id="taskSaveAnotherBtn" onclick="saveTask('another')">Save &amp; Add Another</button>
+    </div>
+    <button class="btn btn-danger" id="taskDeleteBtn" style="display:none;" onclick="deleteTask()">Delete This Task</button>
+  </div>
+</div>
+
+<!-- ============ EARNINGS SCREEN ============ -->
+<div class="screen" id="screen-earnings">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2 id="earningsScreenTitle">Earnings</h2></div>
+  </div>
+
+  <div class="balance-hero" id="balanceHero">
+    <div class="bh-label" id="i18n-net-balance">Net Balance (All Time)</div>
+    <div class="bh-amt" id="netBalanceAmt">₹0</div>
+    <div class="bh-sub" id="netBalanceSub">₹0 in · ₹0 out</div>
+  </div>
+
+  <div class="inout-pair">
+    <div class="inout-card in">
+      <div class="ic-label" id="i18n-today-in">Today's Money In</div>
+      <div class="ic-amt" id="todayInAmt">₹0</div>
+    </div>
+    <div class="inout-card out">
+      <div class="ic-label" id="i18n-today-out">Today's Money Out</div>
+      <div class="ic-amt" id="todayOutAmt">₹0</div>
+    </div>
+  </div>
+
+  <div class="ledger-add-row">
+    <button class="btn btn-primary" style="background:var(--green);" onclick="openAddLedgerForm('in')" id="i18n-add-money-in">➕ Add Money In</button>
+    <button class="btn btn-primary" style="background:var(--blue);" onclick="openAddLedgerForm('out')" id="i18n-add-money-out">➕ Add Money Out</button>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">Last 7 Days — Money In vs Money Out</div>
+    <canvas id="weekChartCanvas" width="300" height="140" style="width:100%; height:140px;"></canvas>
+    <div class="chart-legend">
+      <span><span class="dot" style="background:var(--green);"></span>Money In</span>
+      <span><span class="dot" style="background:var(--blue);"></span>Money Out</span>
+    </div>
+  </div>
+
+  <div class="section-head"><h3 id="i18n-recent-transactions">Recent Transactions</h3></div>
+  <div class="list-wrap" id="earnListWrap"></div>
+</div>
+
+<!-- ============ ADD MONEY IN/OUT FORM ============ -->
+<div class="screen" id="screen-earning-form">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-earnings')">←</button>
+    <div class="title" id="earningFormTitle">Add Money In</div>
+  </div>
+  <div class="form-wrap">
+    <label>Type</label>
+    <div class="ledger-type-seg" id="ledgerTypeSeg">
+      <button type="button" data-t="in" onclick="setLedgerFormType('in')">💰 Money In</button>
+      <button type="button" data-t="out" onclick="setLedgerFormType('out')">💸 Money Out</button>
+    </div>
+    <label>Amount (₹) *</label>
+    <input type="number" id="e-amount" placeholder="e.g. 300" inputmode="decimal">
+    <div class="field-error" id="e-amount-err">Please enter an amount.</div>
+    <label>What for (optional)</label>
+    <input type="text" id="e-note" placeholder="e.g. Medicine sold, paid to supplier">
+    <label>Date</label>
+    <input type="date" id="e-date">
+    <button class="btn btn-primary" onclick="saveLedgerEntry()">Save</button>
+    <button class="btn btn-danger" id="earningDeleteBtn" style="display:none;" onclick="deleteLedgerEntry()">Delete This Entry</button>
+  </div>
+</div>
+
+<!-- ============ FOLDERS SCREEN ============ -->
+<div class="screen" id="screen-folders">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2 id="foldersScreenTitle">Folders</h2></div>
+    <div class="tright"><button class="icon-btn" onclick="openAddFolderForm()">➕</button></div>
+  </div>
+  <div class="profile-section-sub" style="padding-top:6px;" id="folderSubText">Your Folders (Areas / Villages / Families)</div>
+  <div class="list-wrap" id="folderListWrap" style="padding-top:10px;"></div>
+</div>
+
+<!-- ============ CREATE / EDIT FOLDER FORM ============ -->
+<div class="screen" id="screen-folder-form">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-folders')">←</button>
+    <div class="title" id="folderFormTitle">New Folder</div>
+  </div>
+  <div class="form-wrap">
+    <label>Folder Name</label>
+    <input type="text" id="fold-name" placeholder="e.g. Village A, Relatives, North Side">
+    <div class="field-error" id="fold-name-err">Please enter a name.</div>
+    <button class="btn btn-primary" onclick="saveFolder()">Save Folder</button>
+    <button class="btn btn-danger" id="folderDeleteBtn" style="display:none;" onclick="deleteFolder()">Delete This Folder</button>
+  </div>
+</div>
+
+<!-- ============ FOLDER DETAIL SCREEN ============ -->
+<div class="screen" id="screen-folder-detail">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-folders')">←</button>
+    <div class="title" id="folderDetailTitle">Folder</div>
+    <div class="spacer"></div>
+    <button class="icon-btn" style="width:36px;height:36px;font-size:15px;" onclick="editFolderOpen()">✏️</button>
+  </div>
+  <div class="list-wrap" id="folderDetailListWrap" style="padding-top:14px;"></div>
+</div>
+
+<!-- ============ PROFILE SCREEN ============ -->
+<div class="screen" id="screen-profile">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2>Profile</h2></div>
+    <div class="tright"><button class="icon-btn" onclick="showScreen('screen-my-info')">✏️</button></div>
+  </div>
+
+  <div class="profile-photo-wrap">
+    <div class="profile-photo" id="profilePhotoWrap" onclick="document.getElementById('photoFileInput').click()">
+      <span id="profileInitial">M</span>
+      <div class="photo-badge">📷</div>
+    </div>
+    <input type="file" id="photoFileInput" accept="image/*" style="display:none;" onchange="handlePhotoFile(event)">
+    <div class="pname" id="profileName">Munis</div>
+    <div class="pphone" id="profilePhoneDisplay">Goat &amp; Sheep Doctor</div>
+    <div class="link" id="reframeLink" style="display:none; margin-top:4px; cursor:pointer;" onclick="reframeExistingPhoto()">🔄 Reframe Photo</div>
+  </div>
+
+  <div class="profile-section-label">Payment QR Codes</div>
+  <div class="profile-section-sub">Show QR to receive payments — add the apps you use</div>
+  <div id="qrListWrap"></div>
+  <div class="add-row" onclick="openAddQrForm()">➕ Add Payment App / QR Code</div>
+
+  <div class="profile-card">
+    <div class="profile-row" onclick="showScreen('screen-my-info')">
+      <div class="prow-left"><span class="picon">👤</span><span class="plabel">My Information</span></div>
+      <span class="parrow">›</span>
+    </div>
+    <div class="profile-row" onclick="showScreen('screen-settings')">
+      <div class="prow-left"><span class="picon">⚙️</span><span class="plabel">Settings</span></div>
+      <span class="parrow">›</span>
+    </div>
+    <div class="profile-row" onclick="showScreen('screen-backup')">
+      <div class="prow-left"><span class="picon">☁️</span><span class="plabel">Backup &amp; Restore</span></div>
+      <span class="parrow">›</span>
+    </div>
+    <div class="profile-row" onclick="showAboutModal()">
+      <div class="prow-left"><span class="picon">ℹ️</span><span class="plabel">About Workify</span></div>
+      <span class="parrow">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADD QR FORM ============ -->
+<div class="screen" id="screen-qr-form">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-profile')">←</button>
+    <div class="title">Add Payment App</div>
+  </div>
+  <div class="form-wrap">
+    <label>App Name</label>
+    <input type="text" id="qr-name" placeholder="e.g. PhonePe, Google Pay, Paytm">
+    <div class="field-error" id="qr-name-err">Please enter an app name.</div>
+
+    <label>QR Code Image</label>
+    <button class="btn btn-secondary" style="margin-top:6px;" onclick="document.getElementById('qrFileInput').click()">📷 Choose Image from Gallery</button>
+    <input type="file" id="qrFileInput" accept="image/*" style="display:none;" onchange="handleQrFilePreview(event)">
+    <div id="qrPreviewWrap" style="display:none; margin-top:14px; text-align:center;">
+      <img id="qrPreviewImg" src="" style="max-width:100%; max-height:220px; border-radius:14px; border:1px solid var(--line);">
+    </div>
+
+    <button class="btn btn-primary" onclick="saveQrEntry()">Save</button>
+  </div>
+</div>
+
+<!-- ============ QR VIEW SCREEN ============ -->
+<div class="screen" id="screen-qr-view">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-profile')">←</button>
+    <div class="title" id="qrViewTitle">QR Code</div>
+    <div class="spacer"></div>
+    <button class="delete-icon-btn" onclick="deleteQrEntry()">🗑️</button>
+  </div>
+  <div class="qr-display">
+    <img id="qrViewImg" src="" alt="QR Code">
+    <div class="qr-display-name" id="qrViewName"></div>
+  </div>
+</div>
+
+<!-- ============ MY INFORMATION SCREEN ============ -->
+<div class="screen" id="screen-my-info">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-profile')">←</button>
+    <div class="title">My Information</div>
+  </div>
+  <div class="form-wrap">
+    <label>Name *</label>
+    <input type="text" id="info-name" placeholder="Your name">
+    <div class="field-error" id="info-name-err">Please enter your name.</div>
+
+    <label>Email *</label>
+    <input type="email" id="info-email" placeholder="e.g. munis@example.com">
+    <div class="field-error" id="info-email-err">Please enter a valid email.</div>
+
+    <label>Mobile Number *</label>
+    <div class="phone-row">
+      <div class="phone-cc">+91</div>
+      <input type="tel" id="info-phone" placeholder="10-digit number" maxlength="10" inputmode="numeric" oninput="sanitizePhoneInput(this)">
+    </div>
+    <div class="field-error" id="info-phone-err">Please enter a valid 10-digit number.</div>
+
+    <label>Profession / Tag *</label>
+    <input type="text" id="info-tag" placeholder="e.g. Goat & Sheep Doctor">
+    <div class="field-error" id="info-tag-err">Please enter your profession or tag.</div>
+
+    <label>Business Name (optional)</label>
+    <input type="text" id="info-business" placeholder="e.g. Munis Animal Care">
+
+    <label>Address (optional)</label>
+    <textarea id="info-address" placeholder="Village / area / city"></textarea>
+
+    <label>Gender (optional)</label>
+    <div class="gender-seg" id="infoGenderSeg">
+      <button type="button" data-g="male" onclick="setInfoGender('male')">Male</button>
+      <button type="button" data-g="female" onclick="setInfoGender('female')">Female</button>
+      <button type="button" data-g="other" onclick="setInfoGender('other')">Other</button>
+    </div>
+
+    <label>Date of Birth (optional)</label>
+    <input type="date" id="info-dob">
+
+    <button class="btn btn-primary" onclick="saveMyInfo()">Save</button>
+    <button class="btn btn-secondary" onclick="openChangeProfession()">🧭 Change Profession</button>
+  </div>
+</div>
+
+<!-- ============ SETTINGS SCREEN ============ -->
+<div class="screen" id="screen-settings">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-profile')">←</button>
+    <div class="title" id="i18n-settings-title">Settings</div>
+  </div>
+  <div class="info-banner">Workify saves everything directly on this phone. No internet is needed to use it day to day.</div>
+  <div class="form-wrap">
+    <label id="i18n-appearance">Appearance</label>
+    <div class="gender-seg">
+      <button type="button" id="themeBtnLight" onclick="setTheme('light')">☀️ <span id="i18n-light">Light</span></button>
+      <button type="button" id="themeBtnDark" onclick="setTheme('dark')">🌙 <span id="i18n-dark">Dark</span></button>
+    </div>
+
+    <label style="margin-top:20px;" id="i18n-language">Language</label>
+    <div class="gender-seg">
+      <button type="button" id="langBtnEn" onclick="setLanguage('en')">English</button>
+      <button type="button" id="langBtnHi" onclick="setLanguage('hi')">हिन्दी</button>
+    </div>
+
+    <button class="btn btn-danger" style="margin-top:24px;" onclick="clearAllData()" id="i18n-clear-data">🗑️ Clear All Data</button>
+  </div>
+</div>
+
+<!-- ============ BACKUP & RESTORE SCREEN ============ -->
+<div class="screen" id="screen-backup">
+  <div class="backbar">
+    <button class="backbtn" onclick="showScreen('screen-profile')">←</button>
+    <div class="title" id="i18n-backup-title">Backup &amp; Restore</div>
+  </div>
+  <div class="info-banner">Export a backup file before switching phones, or to keep a safe copy of all visits, tasks, earnings, folders, and QR codes.</div>
+  <div class="form-wrap">
+    <div class="sc-sub" id="lastBackupText" style="margin-bottom:14px; font-size:13px; color:var(--sub);">You haven't backed up yet.</div>
+    <button class="btn btn-primary" onclick="exportBackup()" id="i18n-export-backup">⬇️ Export Backup File</button>
+    <button class="btn btn-secondary" id="shareBackupBtn" onclick="shareBackup()" style="display:none;"><span id="i18n-share-backup">📤 Share Backup (WhatsApp / Email / Drive)</span></button>
+    <button class="btn btn-secondary" onclick="document.getElementById('restoreFileInput').click()" id="i18n-restore-backup">⬆️ Restore from Backup File</button>
+    <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreBackup(event)">
+  </div>
+</div>
+
+<!-- ============ CALENDAR SCREEN ============ -->
+<div class="screen" id="screen-calendar">
+  <div class="topbar">
+    <div class="tleft"><button class="menu-btn" onclick="openDrawer()">☰</button><h2>Calendar</h2></div>
+  </div>
+  <div class="cal-header">
+    <button class="cal-nav" onclick="changeCalMonth(-1)">‹</button>
+    <div class="cal-title" id="calMonthTitle">July 2026</div>
+    <button class="cal-nav" onclick="changeCalMonth(1)">›</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="section-head"><h3 id="calDayTitle">Today</h3></div>
+  <div class="list-wrap" id="calDayList"></div>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="navbtn-home" onclick="goTab('home')">
+    <span class="nicon">🏠</span><span class="nlbl">Home</span>
+  </button>
+  <button class="nav-btn" id="navbtn-visits" onclick="goTab('visits')">
+    <span class="nicon" id="navIconVisits">📋</span><span class="nlbl" id="navLabelVisits">Visits</span>
+  </button>
+  <button class="nav-fab" onclick="openAddForm()">+</button>
+  <button class="nav-btn" id="navbtn-earnings" onclick="goTab('earnings')">
+    <span class="nicon" id="navIconEarnings">💰</span><span class="nlbl" id="navLabelEarnings">Earnings</span>
+  </button>
+  <button class="nav-btn" id="navbtn-profile" onclick="goTab('profile')">
+    <span class="nicon">👤</span><span class="nlbl">Profile</span>
+  </button>
+</div>
+
+<script>
+/* ===================== DATA LAYER ===================== */
+const STORAGE_KEY = "vet_visits_v1";
+const TASKS_KEY = "vet_tasks_v1";
+const EARNINGS_KEY = "vet_earnings_v1";
+const PAYMENTS_KEY = "workify_payments_v1";
+const FOLDERS_KEY = "vet_folders_v1";
+const QR_KEY = "vet_qrcodes_v1";
+const NAME_KEY = "vet_owner_name";
+const TAG_KEY = "vet_owner_tag";
+const PHONE_KEY = "vet_owner_phone";
+const PHOTO_KEY = "vet_owner_photo";
+const BIZ_KEY = "workify_business_name";
+const EMAIL_KEY = "workify_owner_email";
+const ADDR_KEY = "workify_owner_address";
+const GENDER_KEY = "workify_owner_gender";
+const DOB_KEY = "workify_owner_dob";
+const PROFESSION_KEY = "workify_profession";
+const THEME_KEY = "workify_theme";
+const LANG_KEY = "workify_language";
+const ONBOARD_KEY = "workify_onboarded";
+
+/* ===================== PROFESSIONS ===================== */
+const PROFESSIONS = {
+  vet: {
+    name:"Veterinary Doctor", icon:"🐐", tagline:"Animal Doctor",
+    visits:"Visits", visit:"Visit",
+    folders:"Folders", folder:"Folder",
+    earnings:"Earnings", earning:"Earning",
+    extraLabel:"Animal", extraPlaceholder:"e.g. Goat, Sheep",
+    taskFieldLabel:"Task (what needs to be done)", taskPlaceholder:"e.g. Vaccination, Checkup",
+    feeLabel:"Money to take (₹)",
+    folderSub:"Your Folders (Areas / Villages / Families)",
+    folderNamePlaceholder:"e.g. Village A, Relatives, North Side"
+  },
+  delivery: {
+    name:"Delivery Partner", icon:"🚚", tagline:"Delivery Partner",
+    visits:"Deliveries", visit:"Delivery",
+    folders:"Routes", folder:"Route",
+    earnings:"COD Collection", earning:"Collection",
+    extraLabel:"Package Type", extraPlaceholder:"e.g. Parcel, Documents, Food",
+    taskFieldLabel:"Delivery Note", taskPlaceholder:"e.g. Fragile, Leave at door",
+    feeLabel:"COD Amount (₹)",
+    folderSub:"Your Routes (group deliveries by area)",
+    folderNamePlaceholder:"e.g. North Route, Sector 12"
+  },
+  sales: {
+    name:"Salesman", icon:"💼", tagline:"Field Sales",
+    visits:"Clients", visit:"Client",
+    folders:"Leads", folder:"Lead",
+    earnings:"Commission", earning:"Commission",
+    extraLabel:"Product / Interest", extraPlaceholder:"e.g. Insurance, Loan, Product",
+    taskFieldLabel:"Follow-up", taskPlaceholder:"e.g. Send quotation, Call back",
+    feeLabel:"Commission Amount (₹)",
+    folderSub:"Your Leads (group clients by source)",
+    folderNamePlaceholder:"e.g. Referral, Cold Call, Walk-in"
+  },
+  shop: {
+    name:"Shopkeeper", icon:"🛒", tagline:"Shopkeeper",
+    visits:"Customers", visit:"Customer",
+    folders:"Product Categories", folder:"Category",
+    earnings:"Daily Sales", earning:"Sale",
+    extraLabel:"Product", extraPlaceholder:"e.g. Groceries, Electronics",
+    taskFieldLabel:"Order / Task", taskPlaceholder:"e.g. Restock item, Deliver order",
+    feeLabel:"Amount (₹)",
+    folderSub:"Your Categories (group customers by product)",
+    folderNamePlaceholder:"e.g. Groceries, Dairy, Electronics"
+  },
+  farmer: {
+    name:"Farmer", icon:"🌾", tagline:"Farmer",
+    visits:"Buyers", visit:"Buyer",
+    folders:"Crops", folder:"Crop",
+    earnings:"Sales", earning:"Sale",
+    extraLabel:"Crop Type", extraPlaceholder:"e.g. Wheat, Rice, Cotton",
+    taskFieldLabel:"Task", taskPlaceholder:"e.g. Harvest, Deliver, Weigh",
+    feeLabel:"Amount (₹)",
+    folderSub:"Your Crops (group buyers by crop)",
+    folderNamePlaceholder:"e.g. Wheat, Rice, Cotton"
+  },
+  technician: {
+    name:"Service Technician", icon:"🔧", tagline:"Service Technician",
+    visits:"Service Calls", visit:"Service Call",
+    folders:"Customers", folder:"Customer Group",
+    earnings:"Service Charges", earning:"Charge",
+    extraLabel:"Service Type", extraPlaceholder:"e.g. AC Repair, Wiring, Plumbing",
+    taskFieldLabel:"Job", taskPlaceholder:"e.g. Replace part, Inspect",
+    feeLabel:"Service Charge (₹)",
+    folderSub:"Your Groups (organize by area or job type)",
+    folderNamePlaceholder:"e.g. AC Jobs, Wiring Jobs"
+  },
+  student: {
+    name:"Student", icon:"🎓", tagline:"Student / Side Hustle",
+    visits:"Gigs", visit:"Gig",
+    folders:"Hustles", folder:"Hustle",
+    earnings:"Side Income", earning:"Income",
+    extraLabel:"Gig Type", extraPlaceholder:"e.g. Tutoring, Freelance, Reselling",
+    taskFieldLabel:"Task", taskPlaceholder:"e.g. Submit assignment, Revise notes",
+    feeLabel:"Amount (₹)",
+    folderSub:"Your Hustles (group gigs by type — tutoring, freelancing, selling...)",
+    folderNamePlaceholder:"e.g. Tutoring, Freelance Design, Reselling"
+  }
+};
+const CUSTOM_PROF_KEY = "workify_custom_profession";
+PROFESSIONS.custom = {
+  name:"Custom", icon:"🧩", tagline:"Custom Profession",
+  visits:"Visits", visit:"Visit",
+  folders:"Folders", folder:"Folder",
+  earnings:"Earnings", earning:"Earning",
+  extraLabel:"Detail", extraPlaceholder:"e.g. type here",
+  taskFieldLabel:"Task", taskPlaceholder:"e.g. what needs to be done",
+  feeLabel:"Amount (₹)",
+  folderSub:"Your Folders", folderNamePlaceholder:"e.g. group name"
+};
+function singularize(word){
+  word = (word||'').trim();
+  if(!word) return word;
+  return word.toLowerCase().endsWith('s') ? word.slice(0,-1) : word;
+}
+function refreshCustomProfession(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_PROF_KEY));
+    if(saved) Object.assign(PROFESSIONS.custom, saved);
+  }catch(e){ /* keep defaults */ }
+}
+refreshCustomProfession();
+
+let pendingObPhotoDataUrl = null;
+let pendingObProfession = null;
+let changingProfessionOnly = false;
+let pendingObGender = '';
+let pendingInfoGender = '';
+
+/* ===================== VALIDATION HELPERS ===================== */
+function sanitizePhoneInput(el){
+  el.value = el.value.replace(/\D/g, '').slice(0, 10);
+}
+function isValidPhone10(val){
+  return /^[0-9]{10}$/.test(val || '');
+}
+function isValidEmail(val){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val || '');
+}
+function showFieldError(id){
+  const err = document.getElementById(id + '-err');
+  const input = document.getElementById(id);
+  if(err) err.classList.add('show');
+  if(input) input.classList.add('err');
+}
+function clearFieldError(id){
+  const err = document.getElementById(id + '-err');
+  const input = document.getElementById(id);
+  if(err) err.classList.remove('show');
+  if(input) input.classList.remove('err');
+}
+function clearAllFieldErrors(ids){
+  ids.forEach(clearFieldError);
+}
+function setObGender(g){
+  pendingObGender = g;
+  document.querySelectorAll('#obGenderSeg button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-g')===g);
+  });
+}
+function setInfoGender(g){
+  pendingInfoGender = g;
+  document.querySelectorAll('#infoGenderSeg button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-g')===g);
+  });
+}
+
+function loadProfession(){ return localStorage.getItem(PROFESSION_KEY) || "vet"; }
+function curProf(){ return PROFESSIONS[loadProfession()] || PROFESSIONS.vet; }
+function loadBusinessName(){ return localStorage.getItem(BIZ_KEY) || ""; }
+
+function applyProfessionLabels(){
+  const p = curProf();
+  const set = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+  set('navLabelVisits', p.visits);
+  set('navIconVisits', p.icon);
+  set('navLabelEarnings', p.earnings);
+  set('drawerFoldersLabel', p.folders);
+  set('visitsScreenTitle', p.visits);
+  set('homeSectionTitle', "Today's " + p.visits);
+  set('statVisitsLabel', "Today's " + p.visits);
+  set('statEarningsLabel', "Today's " + p.earnings);
+  set('extraFieldLabel', p.extraLabel);
+  set('moreToggleExtra', p.extraLabel.toLowerCase());
+  set('taskFieldLabel', p.taskFieldLabel);
+  set('feeFieldLabel', p.feeLabel);
+  set('d-task-label', p.taskFieldLabel.replace(/\s*\(.*?\)/,''));
+  set('d-fee-label', p.feeLabel.replace(/\s*\(.*?\)/,''));
+  set('earningsScreenTitle', p.earnings);
+  set('earnHeroLabel', "Today's " + p.earnings);
+  set('earnAllTimeLabel', "All Time " + p.earnings);
+  set('foldersScreenTitle', p.folders);
+  set('folderSubText', p.folderSub);
+
+  const fAnimal = document.getElementById('f-animal');
+  if(fAnimal) fAnimal.placeholder = p.extraPlaceholder;
+  const fTask = document.getElementById('f-task');
+  if(fTask) fTask.placeholder = p.taskPlaceholder;
+  const foldName = document.getElementById('fold-name');
+  if(foldName) foldName.placeholder = p.folderNamePlaceholder;
+}
+
+let visits = [];
+let tasks = [];
+let earnings = [];
+let payments = [];
+let folders = [];
+let qrCodes = [];
+
+let currentVisitTab = "all";
+let currentTaskTab = "upcoming";
+let editingId = null;
+let editingTaskId = null;
+let editingEarningId = null;
+let editingLedgerType = 'in';
+let currentLedgerFormType = 'in';
+let editingFolderId = null;
+let openFolderId = null;
+let editingQrId = null;
+let pendingQrDataUrl = null;
+let activeMainTab = "home";
+let selectedTaskPriority = "medium";
+let isAwayFromHome = false;
+let suppressHistoryPush = false;
+let notifBannerTarget = 'screen-tasks';
+
+/* ===================== DAILY NOTIFICATION ===================== */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function requestNotifPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission().catch(()=>{});
+  }
+}
+
+function dismissNotifBanner(){
+  const b = document.getElementById('notifBanner');
+  if(b) b.style.display = 'none';
+}
+
+function showInAppBanner(icon, title, body, calm, target){
+  const b = document.getElementById('notifBanner');
+  if(!b) return;
+  document.getElementById('notifBannerIcon').textContent = icon;
+  document.getElementById('notifBannerTitle').textContent = title;
+  document.getElementById('notifBannerBody').textContent = body;
+  b.classList.toggle('calm', !!calm);
+  notifBannerTarget = target || 'screen-tasks';
+  b.style.display = 'flex';
+}
+
+function checkTodayAndNotify(){
+  const today = todayStr();
+  const name = loadOwnerName();
+  const p = curProf();
+  const pendingVisits = visits.filter(v => !v.done && v.date === today).length;
+  const pendingTasks = tasks.filter(t => !t.done && (t.date === today || !t.date)).length;
+  const total = pendingVisits + pendingTasks;
+
+  let icon, title, body, calm;
+  if(total === 0){
+    icon = '📭';
+    title = `Hey ${name}, no tasks today!`;
+    body = `Nothing pending for today. Tap to add a ${p.visit.toLowerCase()} or task and stay ahead.`;
+    calm = true;
+  } else {
+    icon = '🔥';
+    title = `Hey ${name}, ${total} pending today!`;
+    body = `You have ${pendingVisits} ${p.visits.toLowerCase()} and ${pendingTasks} task(s) waiting — let's complete them!`;
+    calm = false;
+  }
+
+  showInAppBanner(icon, title, body, calm, total === 0 ? 'screen-tasks' : 'screen-visits');
+
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      if(navigator.serviceWorker && navigator.serviceWorker.getRegistration){
+        navigator.serviceWorker.getRegistration().then(reg=>{
+          if(reg && reg.showNotification){
+            reg.showNotification(title, { body, icon:'icons/icon-192.png', badge:'icons/icon-192.png', tag:'workify-daily' });
+          } else {
+            new Notification(title, { body, icon:'icons/icon-192.png' });
+          }
+        }).catch(()=>{ new Notification(title, { body }); });
+      } else {
+        new Notification(title, { body, icon:'icons/icon-192.png' });
+      }
+    }catch(e){ /* ignore notification errors, in-app banner already shown */ }
+  }
+}
+
+function maybeShowDailyNotification(){
+  const today = todayStr();
+  const lastShown = sessionStorage.getItem('workify_notif_session_date');
+  if(lastShown === today && sessionStorage.getItem('workify_notif_shown') === '1') return;
+  sessionStorage.setItem('workify_notif_session_date', today);
+  sessionStorage.setItem('workify_notif_shown', '1');
+
+  const lastBackup = Number(localStorage.getItem(LAST_BACKUP_KEY)) || 0;
+  const daysSinceBackup = lastBackup ? Math.floor((Date.now()-lastBackup)/86400000) : null;
+  const hasData = visits.length > 0 || tasks.length > 0;
+  if(hasData && (daysSinceBackup === null || daysSinceBackup >= 7)){
+    const msg = daysSinceBackup === null
+      ? "You haven't backed up your data yet. Tap here to keep it safe."
+      : `It's been ${daysSinceBackup} days since your last backup. Tap here to back up now.`;
+    showInAppBanner('🔒', 'Backup reminder', msg, false, 'screen-backup');
+    return;
+  }
+  checkTodayAndNotify();
+}
+
+function setTaskPriority(p){
+  selectedTaskPriority = p;
+  document.querySelectorAll('#prioritySeg button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-p')===p);
+  });
+}
+
+const AVATAR_COLORS = ['#16A34A','#2563EB','#EAB308','#0F7A38','#1D4ED8','#A16207','#22C55E'];
+function colorForName(name){
+  let hash = 0;
+  for(let i=0;i<(name||'?').length;i++) hash += name.charCodeAt(i);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function loadAll(){
+  try{ visits = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ visits = []; }
+  try{ tasks = JSON.parse(localStorage.getItem(TASKS_KEY)) || []; }catch(e){ tasks = []; }
+  try{ earnings = JSON.parse(localStorage.getItem(EARNINGS_KEY)) || []; }catch(e){ earnings = []; }
+  try{ payments = JSON.parse(localStorage.getItem(PAYMENTS_KEY)) || []; }catch(e){ payments = []; }
+  try{ folders = JSON.parse(localStorage.getItem(FOLDERS_KEY)) || []; }catch(e){ folders = []; }
+  try{ qrCodes = JSON.parse(localStorage.getItem(QR_KEY)) || []; }catch(e){ qrCodes = []; }
+}
+function saveVisits(){ trySave(STORAGE_KEY, visits); }
+function saveTasks(){ trySave(TASKS_KEY, tasks); }
+function saveEarnings(){ trySave(EARNINGS_KEY, earnings); }
+function savePayments(){ trySave(PAYMENTS_KEY, payments); }
+function saveFolders(){ trySave(FOLDERS_KEY, folders); }
+function saveQrCodes(){ trySave(QR_KEY, qrCodes); }
+function trySave(key, data){
+  try{ localStorage.setItem(key, JSON.stringify(data)); }
+  catch(e){ showConfirmModal({icon:'⚠️', title:'Could not save', msg:'Storage might be full on this phone.', confirmText:'OK', confirmClass:'btn-primary', showCancel:false, onConfirm:()=>{}}); }
+}
+function uid(){ return 'v' + Date.now() + Math.floor(Math.random()*10000); }
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function escapeHtml(s){
+  if(!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtMoney(n){ n = Number(n)||0; return '₹' + n.toLocaleString('en-IN'); }
+function fmtDateHeading(dateStr){
+  if(!dateStr) return "No date set";
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr + "T00:00:00");
+  const diffDays = Math.round((d - today)/86400000);
+  if(diffDays === 0) return "Today";
+  if(diffDays === 1) return "Tomorrow";
+  if(diffDays === -1) return "Yesterday";
+  return d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
+}
+function fmtTime(t){
+  if(!t) return "";
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h>=12 ? 'PM':'AM';
+  const h12 = h%12===0 ? 12 : h%12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+function isToday(dateStr){ return dateStr === todayStr(); }
+function isTomorrow(dateStr){
+  if(!dateStr) return false;
+  const t = new Date(todayStr()+"T00:00:00");
+  t.setDate(t.getDate()+1);
+  const ts = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
+  return dateStr === ts;
+}
+
+/* ===================== NAVIGATION ===================== */
+const MAIN_SCREENS = ['screen-home','screen-visits','screen-earnings','screen-profile'];
+function showScreen(id){
+  const incoming = document.getElementById(id);
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active','anim-push','anim-fade');
+  });
+  incoming.classList.add(MAIN_SCREENS.includes(id) ? 'anim-fade' : 'anim-push');
+  incoming.classList.add('active');
+  window.scrollTo(0,0);
+  if(id === 'screen-home'){ renderHome(); }
+  if(id === 'screen-visits'){ renderVisitList(); }
+  if(id === 'screen-earnings'){ renderEarnings(); }
+  if(id === 'screen-folders'){ renderFolderList(); }
+  if(id === 'screen-profile'){ renderProfile(); }
+  if(id === 'screen-tasks'){ renderTaskList(); }
+  if(id === 'screen-my-info'){ fillMyInfoForm(); }
+  if(id === 'screen-search'){ renderSearch(); }
+  if(id === 'screen-calendar'){ renderCalendar(); }
+  if(id === 'screen-backup'){
+    renderBackupStatus();
+    document.getElementById('shareBackupBtn').style.display = (navigator.share ? 'block' : 'none');
+  }
+
+  if(!suppressHistoryPush){
+    if(id === 'screen-home'){
+      if(isAwayFromHome){
+        isAwayFromHome = false;
+        history.replaceState({workifyHome:true}, '', location.href);
+      }
+    } else {
+      if(!isAwayFromHome){
+        isAwayFromHome = true;
+        history.pushState({workifyAway:true}, '', location.href);
+      }
+    }
+  }
+}
+function goTab(tab){
+  activeMainTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(tab==='home'){ document.getElementById('navbtn-home').classList.add('active'); showScreen('screen-home'); }
+  if(tab==='visits'){ document.getElementById('navbtn-visits').classList.add('active'); showScreen('screen-visits'); }
+  if(tab==='earnings'){ document.getElementById('navbtn-earnings').classList.add('active'); showScreen('screen-earnings'); }
+  if(tab==='profile'){ document.getElementById('navbtn-profile').classList.add('active'); showScreen('screen-profile'); }
+}
+function openDrawer(){ document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
+
+function toggleMoreDetails(force){
+  const wrap = document.getElementById('moreDetailsWrap');
+  const toggle = document.getElementById('moreToggle');
+  const shouldOpen = (force !== undefined) ? force : !wrap.classList.contains('open');
+  wrap.classList.toggle('open', shouldOpen);
+  toggle.classList.toggle('open', shouldOpen);
+}
+
+/* ===================== ONBOARDING ===================== */
+function showOnboardStep(step){
+  document.getElementById('screen-onboard-1').classList.toggle('active', step===1);
+  document.getElementById('screen-onboard-2').classList.toggle('active', step===2);
+  window.scrollTo(0,0);
+}
+
+function handleObPhotoFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    openPhotoCrop(e.target.result, function(croppedDataUrl){
+      pendingObPhotoDataUrl = croppedDataUrl;
+      document.getElementById('obPhotoWrap').innerHTML = `<img src="${pendingObPhotoDataUrl}" alt="Profile"><div class="ob-photo-badge">✓</div>`;
+    });
+  };
+  reader.onerror = function(){ showErrorModal("Could not load that photo. Please try another one."); };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function goOnboardStep2(){
+  const name = document.getElementById('ob-name').value.trim();
+  const email = document.getElementById('ob-email').value.trim();
+  const phone = document.getElementById('ob-phone').value.trim();
+  clearAllFieldErrors(['ob-name','ob-email','ob-phone']);
+  let ok = true;
+  if(!name){ showFieldError('ob-name'); ok = false; }
+  if(!isValidEmail(email)){ showFieldError('ob-email'); ok = false; }
+  if(!isValidPhone10(phone)){ showFieldError('ob-phone'); ok = false; }
+  if(!ok) return;
+  buildProfessionGrid();
+  showOnboardStep(2);
+}
+
+function buildProfessionGrid(){
+  const grid = document.getElementById('professionGrid');
+  grid.innerHTML = "";
+  Object.keys(PROFESSIONS).filter(key=>key!=='custom').forEach(key=>{
+    const p = PROFESSIONS[key];
+    const card = document.createElement('div');
+    card.className = 'profession-card' + (pendingObProfession===key ? ' selected' : '');
+    card.onclick = ()=>selectProfessionCard(key);
+    card.innerHTML = `<div class="pc-icon">${p.icon}</div><div class="pc-name">${p.name}</div>`;
+    grid.appendChild(card);
+  });
+  const customCard = document.createElement('div');
+  customCard.className = 'profession-card custom-card' + (pendingObProfession==='custom' ? ' selected' : '');
+  customCard.onclick = ()=>selectProfessionCard('custom');
+  customCard.innerHTML = `<div class="pc-icon">🧩</div><div class="pc-name">Other / Custom</div>`;
+  grid.appendChild(customCard);
+}
+
+function selectProfessionCard(key){
+  if(key === 'custom'){
+    openCustomProfessionForm();
+    return;
+  }
+  pendingObProfession = key;
+  buildProfessionGrid();
+  document.getElementById('obFinishBtn').disabled = false;
+}
+
+function finishOnboarding(){
+  if(!pendingObProfession){ showErrorModal("Please choose your profession."); return; }
+
+  if(changingProfessionOnly){
+    localStorage.setItem(PROFESSION_KEY, pendingObProfession);
+    changingProfessionOnly = false;
+    pendingObProfession = null;
+    document.getElementById('screen-onboard-2').classList.remove('active');
+    document.getElementById('screen-onboard-2').style.zIndex = '';
+    applyProfessionLabels();
+    showScreen('screen-settings');
+    showQuickToast("✅ Profession updated!");
+    return;
+  }
+
+  const name = document.getElementById('ob-name').value.trim() || 'Friend';
+  const phone = document.getElementById('ob-phone').value.trim();
+  const email = document.getElementById('ob-email').value.trim();
+  const business = document.getElementById('ob-business').value.trim();
+  const address = document.getElementById('ob-address').value.trim();
+  const dob = document.getElementById('ob-dob').value;
+  localStorage.setItem(NAME_KEY, name);
+  localStorage.setItem(PHONE_KEY, phone);
+  localStorage.setItem(EMAIL_KEY, email);
+  localStorage.setItem(BIZ_KEY, business);
+  localStorage.setItem(ADDR_KEY, address);
+  localStorage.setItem(GENDER_KEY, pendingObGender);
+  localStorage.setItem(DOB_KEY, dob);
+  localStorage.setItem(TAG_KEY, PROFESSIONS[pendingObProfession].tagline);
+  if(pendingObPhotoDataUrl) localStorage.setItem(PHOTO_KEY, pendingObPhotoDataUrl);
+  localStorage.setItem(PROFESSION_KEY, pendingObProfession);
+  localStorage.setItem(ONBOARD_KEY, "1");
+
+  document.getElementById('screen-onboard-1').classList.remove('active');
+  document.getElementById('screen-onboard-2').classList.remove('active');
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  applyProfessionLabels();
+  goTab('home');
+  requestNotifPermission();
+  maybeShowDailyNotification();
+  setTimeout(maybeAskForTour, 600);
+}
+
+function obBackClicked(){
+  if(changingProfessionOnly){
+    changingProfessionOnly = false;
+    pendingObProfession = null;
+    document.getElementById('screen-onboard-2').classList.remove('active');
+    document.getElementById('screen-onboard-2').style.zIndex = '';
+    showScreen('screen-settings');
+  } else {
+    showOnboardStep(1);
+  }
+}
+
+/* ===================== PHOTO CROP TOOL ===================== */
+let cropImg = null;
+let cropScale = 1;
+let cropMinScale = 1;
+let cropOffsetX = 0;
+let cropOffsetY = 0;
+let cropDragging = false;
+let cropLastX = 0;
+let cropLastY = 0;
+let cropCallback = null;
+const CROP_SIZE = 320;
+
+function openPhotoCrop(dataUrl, callback){
+  cropCallback = callback;
+  cropImg = new Image();
+  cropImg.onload = function(){
+    const minScale = Math.max(CROP_SIZE / cropImg.width, CROP_SIZE / cropImg.height);
+    cropMinScale = minScale;
+    cropScale = minScale;
+    cropOffsetX = 0;
+    cropOffsetY = 0;
+    document.getElementById('cropZoom').value = 100;
+    drawCropCanvas();
+    document.getElementById('screen-photo-crop').classList.add('active');
+  };
+  cropImg.src = dataUrl;
+}
+
+function drawCropCanvas(){
+  const canvas = document.getElementById('cropCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
+  ctx.save();
+  ctx.translate(CROP_SIZE/2 + cropOffsetX, CROP_SIZE/2 + cropOffsetY);
+  ctx.scale(cropScale, cropScale);
+  ctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
+  ctx.restore();
+}
+
+function onCropZoomChange(sliderVal){
+  // slider 100-300 maps to 1x - 3x of the minimum "fit" scale
+  const factor = sliderVal / 100;
+  cropScale = cropMinScale * factor;
+  clampCropOffset();
+  drawCropCanvas();
+}
+
+function clampCropOffset(){
+  const scaledW = cropImg.width * cropScale;
+  const scaledH = cropImg.height * cropScale;
+  const maxOffX = Math.max(0, (scaledW - CROP_SIZE) / 2);
+  const maxOffY = Math.max(0, (scaledH - CROP_SIZE) / 2);
+  cropOffsetX = Math.max(-maxOffX, Math.min(maxOffX, cropOffsetX));
+  cropOffsetY = Math.max(-maxOffY, Math.min(maxOffY, cropOffsetY));
+}
+
+function cropPointerDown(x, y){
+  cropDragging = true;
+  cropLastX = x;
+  cropLastY = y;
+}
+function cropPointerMove(x, y){
+  if(!cropDragging) return;
+  cropOffsetX += (x - cropLastX);
+  cropOffsetY += (y - cropLastY);
+  cropLastX = x;
+  cropLastY = y;
+  clampCropOffset();
+  drawCropCanvas();
+}
+function cropPointerUp(){
+  cropDragging = false;
+}
+
+function confirmPhotoCrop(){
+  const canvas = document.getElementById('cropCanvas');
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.87);
+  document.getElementById('screen-photo-crop').classList.remove('active');
+  if(cropCallback) cropCallback(dataUrl);
+  cropCallback = null;
+}
+
+function cancelPhotoCrop(){
+  document.getElementById('screen-photo-crop').classList.remove('active');
+  cropCallback = null;
+}
+
+function reframeExistingPhoto(){
+  const photo = loadOwnerPhoto();
+  if(!photo) return;
+  openPhotoCrop(photo, function(croppedDataUrl){
+    localStorage.setItem(PHOTO_KEY, croppedDataUrl);
+    renderProfile();
+  });
+}
+
+(function setupCropCanvasEvents(){
+  document.addEventListener('DOMContentLoaded', attachCropEvents);
+  attachCropEvents();
+  function attachCropEvents(){
+    const canvas = document.getElementById('cropCanvas');
+    if(!canvas || canvas._cropWired) return;
+    canvas._cropWired = true;
+    canvas.addEventListener('pointerdown', (e)=>{
+      canvas.setPointerCapture(e.pointerId);
+      cropPointerDown(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('pointermove', (e)=> cropPointerMove(e.clientX, e.clientY));
+    canvas.addEventListener('pointerup', cropPointerUp);
+    canvas.addEventListener('pointercancel', cropPointerUp);
+  }
+})();
+
+/* ===================== CALENDAR ===================== */
+let calYear, calMonth, selectedCalDate;
+
+function openCalendar(){
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  selectedCalDate = todayStr();
+  showScreen('screen-calendar');
+}
+
+function changeCalMonth(delta){
+  calMonth += delta;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function dateHasItems(dateStr){
+  return visits.some(v=>v.date===dateStr) || tasks.some(t=>t.date===dateStr);
+}
+
+function renderCalendar(){
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthTitle').textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = "";
+  ['S','M','T','W','T','F','S'].forEach(d=>{
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+  const today = todayStr();
+  const cells = [];
+
+  for(let i=firstDay-1; i>=0; i--){
+    cells.push({day: daysInPrevMonth-i, other:true, dateStr:null});
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    cells.push({day:d, other:false, dateStr});
+  }
+  while(cells.length % 7 !== 0){
+    cells.push({day: cells.length, other:true, dateStr:null});
+  }
+
+  cells.forEach(c=>{
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell' + (c.other?' other-month':'') + (c.dateStr===today?' today':'') + (c.dateStr===selectedCalDate?' selected':'');
+    cell.innerHTML = String(c.day) + (c.dateStr && dateHasItems(c.dateStr) ? '<div class="cal-dot"></div>' : '');
+    if(c.dateStr) cell.onclick = ()=>selectCalDay(c.dateStr);
+    grid.appendChild(cell);
+  });
+
+  renderCalDayList();
+}
+
+function selectCalDay(dateStr){
+  selectedCalDate = dateStr;
+  renderCalendar();
+}
+
+function renderCalDayList(){
+  const isToday = selectedCalDate === todayStr();
+  const d = new Date(selectedCalDate + 'T00:00:00');
+  const label = d.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
+  document.getElementById('calDayTitle').textContent = isToday ? 'Today · ' + label : label;
+
+  const wrap = document.getElementById('calDayList');
+  wrap.innerHTML = "";
+  const dayVisits = visits.filter(v=>v.date===selectedCalDate);
+  const dayTasks = tasks.filter(t=>t.date===selectedCalDate);
+
+  if(dayVisits.length===0 && dayTasks.length===0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">📅</div><div class="msg">Nothing scheduled this day.</div></div>`;
+    return;
+  }
+  dayVisits.forEach(v=>wrap.appendChild(buildVisitCard(v)));
+  dayTasks.forEach(t=>wrap.appendChild(buildTaskCard(t)));
+}
+
+function setText(id, text){
+  const el = document.getElementById(id);
+  if(el) el.textContent = text;
+}
+
+/* ===================== THEME ===================== */
+function setTheme(theme){
+  localStorage.setItem(THEME_KEY, theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtnLight').classList.toggle('active', theme==='light');
+  document.getElementById('themeBtnDark').classList.toggle('active', theme==='dark');
+}
+
+/* ===================== LANGUAGE ===================== */
+const TRANSLATIONS = {
+  en: {
+    search:'Search', calendar:'Calendar', tasks:'Tasks',
+    'backup-restore':'Backup & Restore', settings:'Settings', about:'About Workify',
+    'search-title':'Search', 'settings-title':'Settings', 'backup-title':'Backup & Restore',
+    'export-backup':'⬇️ Export Backup File', 'share-backup':'📤 Share Backup (WhatsApp / Email / Drive)',
+    'restore-backup':'⬆️ Restore from Backup File',
+    'net-balance':"Net Balance (All Time)", 'today-in':"Today's Money In", 'today-out':"Today's Money Out",
+    'add-money-in':'➕ Add Money In', 'add-money-out':'➕ Add Money Out', 'recent-transactions':'Recent Transactions',
+    todo:'To Do', done:'Done',
+    'filter-all':'All', 'filter-today':'Today', 'filter-upcoming':'Upcoming', 'filter-completed':'Completed',
+    appearance:'Appearance', light:'Light', dark:'Dark', language:'Language',
+    'clear-data':'🗑️ Clear All Data',
+  },
+  hi: {
+    search:'खोजें', calendar:'कैलेंडर', tasks:'कार्य',
+    'backup-restore':'बैकअप और पुनर्स्थापना', settings:'सेटिंग्स', about:'Workify के बारे में',
+    'search-title':'खोजें', 'settings-title':'सेटिंग्स', 'backup-title':'बैकअप और पुनर्स्थापना',
+    'export-backup':'⬇️ बैकअप फ़ाइल निर्यात करें', 'share-backup':'📤 बैकअप साझा करें (WhatsApp / Email / Drive)',
+    'restore-backup':'⬆️ बैकअप फ़ाइल से पुनर्स्थापित करें',
+    'net-balance':"कुल शेष (हमेशा के लिए)", 'today-in':"आज आया पैसा", 'today-out':"आज गया पैसा",
+    'add-money-in':'➕ पैसा जोड़ें (आया)', 'add-money-out':'➕ पैसा जोड़ें (गया)', 'recent-transactions':'हाल के लेन-देन',
+    todo:'करने के लिए', done:'पूर्ण',
+    'filter-all':'सभी', 'filter-today':'आज', 'filter-upcoming':'आगामी', 'filter-completed':'पूर्ण',
+    appearance:'दिखावट', light:'लाइट', dark:'डार्क', language:'भाषा',
+    'clear-data':'🗑️ सभी डेटा साफ़ करें',
+  }
+};
+
+function applyLanguage(){
+  const lang = localStorage.getItem(LANG_KEY) || 'en';
+  const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  Object.keys(dict).forEach(key=>{
+    setText('i18n-' + key, dict[key]);
+  });
+  document.getElementById('langBtnEn').classList.toggle('active', lang==='en');
+  document.getElementById('langBtnHi').classList.toggle('active', lang==='hi');
+}
+
+function setLanguage(lang){
+  localStorage.setItem(LANG_KEY, lang);
+  applyLanguage();
+}
+
+function openCustomProfessionForm(){
+  const saved = PROFESSIONS.custom;
+  document.getElementById('cp-name').value = (saved.name !== 'Custom') ? saved.name : '';
+  document.getElementById('cp-visits').value = (saved.visits !== 'Visits') ? saved.visits : '';
+  document.getElementById('cp-folders').value = (saved.folders !== 'Folders') ? saved.folders : '';
+  document.getElementById('cp-earnings').value = (saved.earnings !== 'Earnings') ? saved.earnings : '';
+  document.getElementById('cp-extra').value = (saved.extraLabel !== 'Detail') ? saved.extraLabel : '';
+  clearAllFieldErrors(['cp-name','cp-visits','cp-folders','cp-earnings']);
+  document.getElementById('screen-custom-profession').style.display = 'block';
+}
+
+function cancelCustomProfession(){
+  document.getElementById('screen-custom-profession').style.display = 'none';
+}
+
+function saveCustomProfession(){
+  const name = document.getElementById('cp-name').value.trim();
+  const visitsLabel = document.getElementById('cp-visits').value.trim();
+  const foldersLabel = document.getElementById('cp-folders').value.trim();
+  const earningsLabel = document.getElementById('cp-earnings').value.trim();
+  const extra = document.getElementById('cp-extra').value.trim();
+
+  clearAllFieldErrors(['cp-name','cp-visits','cp-folders','cp-earnings']);
+  let ok = true;
+  if(!name){ showFieldError('cp-name'); ok = false; }
+  if(!visitsLabel){ showFieldError('cp-visits'); ok = false; }
+  if(!foldersLabel){ showFieldError('cp-folders'); ok = false; }
+  if(!earningsLabel){ showFieldError('cp-earnings'); ok = false; }
+  if(!ok) return;
+
+  const config = {
+    name, icon:'🧩', tagline:name,
+    visits:visitsLabel, visit:singularize(visitsLabel),
+    folders:foldersLabel, folder:singularize(foldersLabel),
+    earnings:earningsLabel, earning:singularize(earningsLabel),
+    extraLabel: extra || 'Detail', extraPlaceholder:'e.g. type here',
+    taskFieldLabel:'Task', taskPlaceholder:'e.g. what needs to be done',
+    feeLabel:'Amount (₹)',
+    folderSub:'Your ' + foldersLabel, folderNamePlaceholder:'e.g. group name'
+  };
+  localStorage.setItem(CUSTOM_PROF_KEY, JSON.stringify(config));
+  refreshCustomProfession();
+
+  pendingObProfession = 'custom';
+  document.getElementById('screen-custom-profession').style.display = 'none';
+  buildProfessionGrid();
+  document.getElementById('obFinishBtn').disabled = false;
+}
+
+function openChangeProfession(){
+  changingProfessionOnly = true;
+  pendingObProfession = loadProfession();
+  buildProfessionGrid();
+  document.getElementById('obFinishBtn').disabled = false;
+  document.getElementById('screen-onboard-2').style.zIndex = '250';
+  document.getElementById('screen-onboard-1').classList.remove('active');
+  document.getElementById('screen-onboard-2').classList.add('active');
+}
+
+/* ===================== HOME ===================== */
+function renderHome(){
+  const name = loadOwnerName();
+  const h = new Date().getHours();
+  let greet = "Good Morning,";
+  if(h>=12 && h<17) greet = "Good Afternoon,";
+  else if(h>=17) greet = "Good Evening,";
+  document.getElementById('greetEmoji').innerHTML = greet + ' <span class="docname" id="ownerName" onclick="editOwnerName()">' + escapeHtml(name) + '</span>';
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  const todayVisits = visits.filter(v=>!v.done && isToday(v.date));
+  const upcoming = visits.filter(v=>!v.done);
+  document.getElementById('statToday').textContent = todayVisits.length;
+  document.getElementById('statUpcomingSub').textContent = upcoming.length + ' upcoming';
+
+  const today = todayStr();
+  const visitsToday = visits.filter(v => v.done && v.doneDate === today);
+  const tasksToday = tasks.filter(t => t.done && t.doneDate === today);
+  const manualToday = earnings.filter(e => e.date === today);
+  const total = visitsToday.reduce((s,v)=>s+(Number(v.fee)||0),0) + tasksToday.reduce((s,t)=>s+(Number(t.fee)||0),0) + manualToday.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  document.getElementById('statTodayEarn').textContent = fmtMoney(total);
+  document.getElementById('statTodayEarnSub').textContent = 'From ' + (visitsToday.length+tasksToday.length+manualToday.length) + ' today';
+
+  const wrap = document.getElementById('homeListWrap');
+  wrap.innerHTML = "";
+  const items = todayVisits.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99')).slice(0,5);
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">📋</div><div class="msg">No ${curProf().visits.toLowerCase()} today.\nTap + to add one.</div></div>`;
+  } else {
+    items.forEach(v=>wrap.appendChild(buildVisitCard(v)));
+  }
+}
+
+/* ===================== VISITS LIST (FULL) ===================== */
+function setVisitTab(tab){
+  currentVisitTab = tab;
+  ['all','today','tomorrow','completed'].forEach(t=>{
+    document.getElementById('vtab-'+t).classList.toggle('active', t===tab);
+  });
+  renderVisitList();
+}
+
+function renderVisitList(){
+  const wrap = document.getElementById('listWrap');
+  wrap.innerHTML = "";
+  let items = visits.slice();
+
+  if(currentVisitTab === 'today') items = items.filter(v=>!v.done && isToday(v.date));
+  else if(currentVisitTab === 'tomorrow') items = items.filter(v=>!v.done && isTomorrow(v.date));
+  else if(currentVisitTab === 'completed') items = items.filter(v=>v.done);
+  else items = items.filter(v=>!v.done);
+
+  items.sort((a,b)=>{
+    const ka = (a.date||'9999-99-99') + 'T' + (a.time||'99:99');
+    const kb = (b.date||'9999-99-99') + 'T' + (b.time||'99:99');
+    return currentVisitTab==='completed' ? kb.localeCompare(ka) : ka.localeCompare(kb);
+  });
+
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">📋</div><div class="msg">Nothing here yet.</div></div>`;
+    return;
+  }
+
+  let lastHeading = null;
+  items.forEach(v=>{
+    if(currentVisitTab === 'all' || currentVisitTab === 'completed'){
+      const heading = fmtDateHeading(v.date);
+      if(heading !== lastHeading){
+        const h = document.createElement('div');
+        h.className = 'day-label';
+        h.textContent = heading;
+        wrap.appendChild(h);
+        lastHeading = heading;
+      }
+    }
+    wrap.appendChild(buildVisitCard(v));
+  });
+}
+
+function buildVisitCard(v){
+  const card = document.createElement('div');
+  card.className = 'vcard' + (v.done ? ' done' : '');
+  const color = colorForName(v.name);
+  const initial = (v.name[0]||'?').toUpperCase();
+  const timeStr = v.time ? fmtTime(v.time) : '';
+  const digits = (v.phone||'').replace(/[^0-9]/g,'');
+
+  const top = document.createElement('div');
+  top.className = 'vcard-top';
+  top.onclick = ()=>openDetail(v.id);
+  top.innerHTML = `
+    <div class="avatar" style="background:${color};">${initial}</div>
+    <div class="vcard-info">
+      <div class="vname">${escapeHtml(v.name)}</div>
+      <div class="vmeta">${escapeHtml(v.animal||'')}${v.animal && v.task ? ' · ' : ''}${escapeHtml(v.task||'')}</div>
+      <div class="vtime">${escapeHtml(v.address||'')} ${timeStr ? '· '+timeStr : ''}</div>
+    </div>
+    ${v.fee ? `<div class="vcard-fee">+${fmtMoney(v.fee)}</div>` : ''}
+  `;
+  card.appendChild(top);
+
+  if(v.phone || v.address){
+    const actions = document.createElement('div');
+    actions.className = 'vcard-actions';
+    actions.innerHTML = `
+      ${v.phone ? `<a class="mini-action call" href="tel:${digits}">📞 Call</a>` : ''}
+      ${v.phone ? `<a class="mini-action wa" href="https://wa.me/${digits}" target="_blank">💬 Chat</a>` : ''}
+      ${v.address ? `<a class="mini-action map" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.address)}" target="_blank">📍 Map</a>` : ''}
+    `;
+    actions.querySelectorAll('a').forEach(a=>a.addEventListener('click', e=>e.stopPropagation()));
+    card.appendChild(actions);
+  }
+  return card;
+}
+
+/* ===================== SEARCH ===================== */
+let currentSearchFilter = 'all';
+
+function setSearchFilter(f){
+  currentSearchFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c=>{
+    c.classList.toggle('active', c.getAttribute('data-f')===f);
+  });
+  renderSearch();
+}
+
+function populateSearchFolderFilter(){
+  const sel = document.getElementById('searchFolderFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Folders</option>' +
+    folders.map(f=>`<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('');
+  sel.value = cur;
+}
+
+function renderSearch(){
+  populateSearchFolderFilter();
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const folderFilter = document.getElementById('searchFolderFilter').value;
+  const today = todayStr();
+  const wrap = document.getElementById('searchResults');
+  wrap.innerHTML = "";
+
+  let matches = visits.filter(v => !q || v.name.toLowerCase().includes(q));
+  if(folderFilter) matches = matches.filter(v => v.folderId === folderFilter);
+  if(currentSearchFilter === 'today') matches = matches.filter(v => !v.done && v.date === today);
+  else if(currentSearchFilter === 'upcoming') matches = matches.filter(v => !v.done && v.date > today);
+  else if(currentSearchFilter === 'completed') matches = matches.filter(v => v.done);
+
+  matches.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
+
+  if(matches.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">🔍</div><div class="msg">No ${curProf().visits.toLowerCase()} found.</div></div>`;
+    return;
+  }
+  matches.forEach(v=>wrap.appendChild(buildVisitCard(v)));
+}
+
+/* ===================== VISIT FORM ===================== */
+function openAddForm(){
+  editingId = null;
+  document.getElementById('formTitle').textContent = "New " + curProf().visit;
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('saveAnotherBtn').style.display = 'block';
+  ['f-name','f-phone','f-address','f-animal','f-date','f-time','f-task','f-fee','f-notes'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  clearAllFieldErrors(['f-name','f-phone']);
+  toggleMoreDetails(false);
+  populateFolderOptions('');
+  showScreen('screen-form');
+}
+
+function editVisit(){
+  const v = visits.find(x=>x.id===editingId);
+  if(!v) return;
+  document.getElementById('formTitle').textContent = "Edit " + curProf().visit;
+  document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('saveAnotherBtn').style.display = 'none';
+  document.getElementById('f-name').value = v.name || '';
+  document.getElementById('f-phone').value = v.phone || '';
+  document.getElementById('f-address').value = v.address || '';
+  document.getElementById('f-animal').value = v.animal || '';
+  document.getElementById('f-date').value = v.date || '';
+  document.getElementById('f-time').value = v.time || '';
+  document.getElementById('f-task').value = v.task || '';
+  document.getElementById('f-fee').value = v.fee || '';
+  document.getElementById('f-notes').value = v.notes || '';
+  clearAllFieldErrors(['f-name','f-phone']);
+  toggleMoreDetails(!!(v.time || v.task || v.notes || v.folderId));
+  populateFolderOptions(v.folderId || '');
+  showScreen('screen-form');
+}
+
+function populateFolderOptions(selectedId){
+  const sel = document.getElementById('f-folder');
+  sel.innerHTML = '<option value="">No folder</option>';
+  folders.forEach(f=>{
+    const opt = document.createElement('option');
+    opt.value = f.id;
+    opt.textContent = f.name;
+    if(f.id === selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function saveVisit(mode){
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  clearAllFieldErrors(['f-name','f-phone']);
+  let ok = true;
+  if(!name){ showFieldError('f-name'); ok = false; }
+  if(phone && !isValidPhone10(phone)){ showFieldError('f-phone'); ok = false; }
+  if(!ok) return;
+
+  const data = {
+    name,
+    phone,
+    address: document.getElementById('f-address').value.trim(),
+    animal: document.getElementById('f-animal').value.trim(),
+    date: document.getElementById('f-date').value,
+    time: document.getElementById('f-time').value,
+    task: document.getElementById('f-task').value.trim(),
+    fee: Number(document.getElementById('f-fee').value) || 0,
+    folderId: document.getElementById('f-folder').value || null,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if(editingId){
+    const v = visits.find(x=>x.id===editingId);
+    Object.assign(v, data);
+  } else {
+    visits.push(Object.assign({id:uid(), done:false, doneDate:null}, data));
+  }
+  saveVisits();
+
+  if(mode === 'another'){
+    editingId = null;
+    showQuickToast("✅ Saved! Add the next " + curProf().visit.toLowerCase() + ".");
+    ['f-name','f-phone','f-address','f-animal','f-date','f-time','f-task','f-fee','f-notes'].forEach(id=>{
+      if(id !== 'f-date') document.getElementById(id).value = '';
+    });
+    toggleMoreDetails(false);
+    document.getElementById('f-name').focus();
+    window.scrollTo(0,0);
+    return;
+  }
+  editingId = null;
+  goTab('home');
+}
+
+let undoRestoreFn = null;
+let undoTimer = null;
+
+function showUndoSnack(msg, restoreFn){
+  const existing = document.getElementById('undoSnack');
+  if(existing) existing.remove();
+  if(undoTimer) clearTimeout(undoTimer);
+  undoRestoreFn = restoreFn;
+  const snack = document.createElement('div');
+  snack.id = 'undoSnack';
+  snack.className = 'undo-snack';
+  snack.innerHTML = `<span>${msg}</span><button onclick="performUndo()">UNDO</button>`;
+  document.body.appendChild(snack);
+  undoTimer = setTimeout(()=>{ snack.remove(); undoRestoreFn = null; }, 5000);
+}
+
+function performUndo(){
+  if(undoRestoreFn) undoRestoreFn();
+  const snack = document.getElementById('undoSnack');
+  if(snack) snack.remove();
+  if(undoTimer) clearTimeout(undoTimer);
+  undoRestoreFn = null;
+}
+
+function deleteVisit(){
+  showConfirmModal({
+    icon:'🗑️',
+    title:'Delete this ' + curProf().visit + '?',
+    msg:'You can undo this for a few seconds right after deleting.',
+    confirmText:'Delete',
+    confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      const removed = visits.find(x=>x.id===editingId);
+      if(!removed) return;
+      const idx = visits.indexOf(removed);
+      visits = visits.filter(x=>x.id!==editingId);
+      saveVisits();
+      editingId = null;
+      goTab('home');
+      showUndoSnack('🗑️ ' + curProf().visit + ' deleted.', ()=>{
+        visits.splice(idx, 0, removed);
+        saveVisits();
+        renderHome();
+      });
+    }
+  });
+}
+
+function quickDeleteVisit(){
+  if(!editingId) return;
+  deleteVisit();
+}
+
+/* ===================== VISIT DETAIL ===================== */
+function openDetail(id){
+  editingId = id;
+  const v = visits.find(x=>x.id===id);
+  if(!v) return;
+
+  const color = colorForName(v.name);
+  document.getElementById('d-avatar').style.background = color;
+  document.getElementById('d-avatar').textContent = (v.name[0]||'?').toUpperCase();
+  document.getElementById('d-name').textContent = v.name;
+  document.getElementById('d-animal').textContent = v.animal || '';
+
+  const whenStr = (v.date ? fmtDateHeading(v.date) : 'No date set') + (v.time ? ' • ' + fmtTime(v.time) : '');
+  document.getElementById('d-when').textContent = whenStr;
+
+  const taskBlock = document.getElementById('d-task-block');
+  if(v.task){ taskBlock.style.display='block'; document.getElementById('d-task').textContent = v.task; }
+  else { taskBlock.style.display='none'; }
+
+  const feeBlock = document.getElementById('d-fee-block');
+  if(v.fee){ feeBlock.style.display='block'; document.getElementById('d-fee').textContent = fmtMoney(v.fee); }
+  else { feeBlock.style.display='none'; }
+
+  document.getElementById('d-phone').textContent = v.phone || 'Not added';
+  document.getElementById('d-address').textContent = v.address || 'Not added';
+
+  const notesBlock = document.getElementById('d-notes-block');
+  if(v.notes){ notesBlock.style.display = 'block'; document.getElementById('d-notes').textContent = v.notes; }
+  else { notesBlock.style.display = 'none'; }
+
+  const callBtn = document.getElementById('d-callbtn');
+  const mapBtn = document.getElementById('d-mapbtn');
+  const waBtn = document.getElementById('d-whatsappbtn');
+  if(v.phone){
+    callBtn.href = 'tel:' + v.phone.replace(/\s+/g,'');
+    callBtn.style.opacity = 1;
+    const digits = v.phone.replace(/[^0-9]/g,'');
+    waBtn.href = 'https://wa.me/' + digits;
+    waBtn.style.opacity = 1;
+  } else {
+    callBtn.removeAttribute('href'); callBtn.style.opacity = 0.5;
+    waBtn.removeAttribute('href'); waBtn.style.opacity = 0.5;
+  }
+  if(v.address){
+    mapBtn.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(v.address);
+    mapBtn.style.opacity = 1;
+  } else {
+    mapBtn.removeAttribute('href'); mapBtn.style.opacity = 0.5;
+  }
+
+  const pill = document.getElementById('d-donepill');
+  pill.textContent = v.done ? '✓ Done — tap to undo' : 'Mark as Done';
+  pill.classList.toggle('done', v.done);
+
+  showScreen('screen-detail');
+}
+
+function toggleDone(){
+  const v = visits.find(x=>x.id===editingId);
+  if(!v) return;
+  v.done = !v.done;
+  v.doneDate = v.done ? todayStr() : null;
+  saveVisits();
+  openDetail(v.id);
+}
+
+/* ===================== TASKS ===================== */
+function setTaskTab(tab){
+  currentTaskTab = tab;
+  document.getElementById('tasktab-upcoming').classList.toggle('active', tab==='upcoming');
+  document.getElementById('tasktab-done').classList.toggle('active', tab==='done');
+  renderTaskList();
+}
+
+function renderTaskList(){
+  const wrap = document.getElementById('taskListWrap');
+  wrap.innerHTML = "";
+  let items = tasks.filter(t => currentTaskTab === 'done' ? t.done : !t.done);
+  const priorityRank = {high:0, medium:1, low:2};
+  items.sort((a,b)=>{
+    if(currentTaskTab !== 'done'){
+      const pa = priorityRank[a.priority] ?? 1;
+      const pb = priorityRank[b.priority] ?? 1;
+      if(pa !== pb) return pa - pb;
+    }
+    const ka = a.date || '9999-99-99';
+    const kb = b.date || '9999-99-99';
+    return currentTaskTab==='done' ? kb.localeCompare(ka) : ka.localeCompare(kb);
+  });
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">${currentTaskTab==='done'?'✅':'🗒️'}</div><div class="msg">${currentTaskTab==='done'?'No finished tasks yet.':'No small tasks yet.'}</div></div>`;
+    return;
+  }
+  items.forEach(t=>wrap.appendChild(buildTaskCard(t)));
+}
+
+function buildTaskCard(t){
+  const card = document.createElement('div');
+  card.className = 'vcard';
+  const p = t.priority || 'medium';
+  card.innerHTML = `
+    <div class="vcard-top" style="align-items:center;">
+      <div class="check-circle ${t.done?'checked':''}" onclick="event.stopPropagation(); quickToggleTask('${t.id}')">${t.done?'✓':''}</div>
+      <div class="vcard-info" onclick="editTaskOpen('${t.id}')">
+        <div class="vname ${t.done?'strike':''}"><span class="priority-dot ${p}"></span>${escapeHtml(t.title)}</div>
+        <div class="vmeta">${t.date ? fmtDateHeading(t.date) : ''}</div>
+      </div>
+      ${t.fee ? `<div class="vcard-fee">+${fmtMoney(t.fee)}</div>` : ''}
+    </div>
+  `;
+  return card;
+}
+
+function quickToggleTask(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  t.doneDate = t.done ? todayStr() : null;
+  saveTasks();
+  renderTaskList();
+}
+
+function showQuickToast(msg){
+  const existing = document.getElementById('quickToast');
+  if(existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'quickToast';
+  toast.className = 'btn-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.remove(); }, 2200);
+}
+
+/* ===================== CUSTOM MODAL SYSTEM ===================== */
+let modalCallback = null;
+
+function showConfirmModal(opts){
+  document.getElementById('modalIcon').textContent = opts.icon || '⚠️';
+  document.getElementById('modalTitle').textContent = opts.title || 'Are you sure?';
+  document.getElementById('modalMsg').textContent = opts.msg || '';
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  const cancelBtn = document.getElementById('modalCancelBtn');
+  confirmBtn.textContent = opts.confirmText || 'Delete';
+  confirmBtn.className = 'btn ' + (opts.confirmClass || 'btn-danger');
+  cancelBtn.style.display = opts.showCancel === false ? 'none' : 'block';
+  cancelBtn.textContent = opts.cancelText || 'Cancel';
+  modalCallback = opts.onConfirm || null;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalCallback = null;
+}
+
+function modalConfirmAction(){
+  const cb = modalCallback;
+  closeModal();
+  if(cb) cb();
+}
+
+function showErrorModal(msg){
+  showConfirmModal({icon:'⚠️', title:'Oops', msg, confirmText:'OK', confirmClass:'btn-primary', showCancel:false, onConfirm:()=>{}});
+}
+
+/* ===================== NEW USER TOUR ===================== */
+const TOUR_ASKED_KEY = "workify_tour_asked";
+let tourSlideIndex = 0;
+const TOUR_SLIDES = [
+  { icon:'➕', title:'Quick Add', msg:'Add a visit in seconds. Use "Save & Add Another" to log several back-to-back without leaving the form.' },
+  { icon:'💰', title:'Money In / Money Out', msg:'Track what comes in and what goes out in one place, and see your Net Balance anytime on the Earnings screen.' },
+  { icon:'🗂️', title:'Folders & Calendar', msg:'Group your work into folders, and check the Calendar to see what\'s scheduled on any day — both from the menu (☰).' },
+  { icon:'☁️', title:'Your Data Is Safe', msg:'Everything stays on this phone. Back up anytime from Profile → Backup & Restore, or share a backup file in one tap.' },
+];
+
+function maybeAskForTour(){
+  if(localStorage.getItem(TOUR_ASKED_KEY) === '1') return;
+  localStorage.setItem(TOUR_ASKED_KEY, '1');
+  showConfirmModal({
+    icon:'👋',
+    title:'New to Workify?',
+    msg:"Want a quick look at the main features? It only takes 30 seconds.",
+    confirmText:'Yes, show me',
+    cancelText:"No, I'm good",
+    confirmClass:'btn-primary',
+    onConfirm: ()=>startTour()
+  });
+}
+
+function startTour(){
+  tourSlideIndex = 0;
+  renderTourSlide();
+  document.getElementById('screen-tour').style.display = 'flex';
+}
+
+function renderTourSlide(){
+  const s = TOUR_SLIDES[tourSlideIndex];
+  document.getElementById('tourIcon').textContent = s.icon;
+  document.getElementById('tourTitle').textContent = s.title;
+  document.getElementById('tourMsg').textContent = s.msg;
+  document.getElementById('tourNextBtn').textContent = (tourSlideIndex === TOUR_SLIDES.length-1) ? 'Get Started' : 'Next';
+  const dots = document.getElementById('tourDots');
+  dots.innerHTML = '';
+  TOUR_SLIDES.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'tour-dot' + (i===tourSlideIndex ? ' active' : '');
+    dots.appendChild(d);
+  });
+}
+
+function nextTourSlide(){
+  if(tourSlideIndex === TOUR_SLIDES.length-1){
+    closeTour();
+    return;
+  }
+  tourSlideIndex++;
+  renderTourSlide();
+}
+
+function skipTour(){
+  closeTour();
+}
+
+function closeTour(){
+  document.getElementById('screen-tour').style.display = 'none';
+}
+
+function showAboutModal(){
+  showConfirmModal({
+    icon: '📱',
+    title: 'Workify',
+    msg: "Built for daily visits, tasks, and earnings tracking — works fully offline, right on this phone.",
+    confirmText: 'OK',
+    confirmClass: 'btn-primary',
+    showCancel: false,
+    onConfirm: ()=>{}
+  });
+}
+
+function openAddTaskForm(){
+  editingTaskId = null;
+  document.getElementById('taskFormTitle').textContent = "New Task";
+  document.getElementById('taskDeleteBtn').style.display = 'none';
+  document.getElementById('taskSaveAnotherBtn').style.display = 'block';
+  ['t-title','t-date','t-fee','t-notes'].forEach(id=>document.getElementById(id).value = '');
+  clearFieldError('t-title');
+  setTaskPriority('medium');
+  showScreen('screen-task-form');
+}
+
+function editTaskOpen(id){
+  editingTaskId = id;
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('taskFormTitle').textContent = "Edit Task";
+  document.getElementById('taskDeleteBtn').style.display = 'block';
+  document.getElementById('taskSaveAnotherBtn').style.display = 'none';
+  document.getElementById('t-title').value = t.title || '';
+  document.getElementById('t-date').value = t.date || '';
+  document.getElementById('t-fee').value = t.fee || '';
+  document.getElementById('t-notes').value = t.notes || '';
+  clearFieldError('t-title');
+  setTaskPriority(t.priority || 'medium');
+  showScreen('screen-task-form');
+}
+
+function saveTask(mode){
+  const title = document.getElementById('t-title').value.trim();
+  clearFieldError('t-title');
+  if(!title){ showFieldError('t-title'); return; }
+  const data = {
+    title,
+    date: document.getElementById('t-date').value,
+    fee: Number(document.getElementById('t-fee').value) || 0,
+    notes: document.getElementById('t-notes').value.trim(),
+    priority: selectedTaskPriority,
+  };
+  if(editingTaskId){
+    const t = tasks.find(x=>x.id===editingTaskId);
+    Object.assign(t, data);
+  } else {
+    tasks.push(Object.assign({id:uid(), done:false, doneDate:null}, data));
+  }
+  saveTasks();
+
+  if(mode === 'another'){
+    editingTaskId = null;
+    showQuickToast("✅ Task saved! Add the next one.");
+    ['t-title','t-fee','t-notes'].forEach(id=>document.getElementById(id).value = '');
+    setTaskPriority('medium');
+    document.getElementById('t-title').focus();
+    window.scrollTo(0,0);
+    return;
+  }
+  editingTaskId = null;
+  showScreen('screen-tasks');
+}
+
+function deleteTask(){
+  showConfirmModal({
+    icon:'🗑️',
+    title:'Delete this task?',
+    msg:'You can undo this for a few seconds right after deleting.',
+    confirmText:'Delete',
+    confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      const removed = tasks.find(x=>x.id===editingTaskId);
+      if(!removed) return;
+      const idx = tasks.indexOf(removed);
+      tasks = tasks.filter(x=>x.id!==editingTaskId);
+      saveTasks();
+      editingTaskId = null;
+      showScreen('screen-tasks');
+      showUndoSnack('🗑️ Task deleted.', ()=>{
+        tasks.splice(idx, 0, removed);
+        saveTasks();
+        renderTaskList();
+      });
+    }
+  });
+}
+
+/* ===================== EARNINGS ===================== */
+function renderWeekChart(){
+  const canvas = document.getElementById('weekChartCanvas');
+  if(!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 300;
+  const cssH = 140;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const days = [];
+  for(let i=6; i>=0; i--){
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const inAmt = visits.filter(v=>v.done && v.doneDate===dateStr).reduce((s,v)=>s+(Number(v.fee)||0),0)
+                + tasks.filter(t=>t.done && t.doneDate===dateStr).reduce((s,t)=>s+(Number(t.fee)||0),0)
+                + earnings.filter(e=>e.date===dateStr).reduce((s,e)=>s+(Number(e.amount)||0),0);
+    const outAmt = payments.filter(p=>p.date===dateStr).reduce((s,p)=>s+(Number(p.amount)||0),0);
+    days.push({label: d.toLocaleDateString('en-IN',{weekday:'short'}).slice(0,1), inAmt, outAmt});
+  }
+
+  const maxVal = Math.max(1, ...days.map(d=>Math.max(d.inAmt, d.outAmt)));
+  const chartH = cssH - 24;
+  const groupW = cssW / days.length;
+  const barW = Math.min(16, groupW / 3);
+
+  days.forEach((d,i)=>{
+    const cx = i * groupW + groupW/2;
+    const inH = (d.inAmt / maxVal) * chartH;
+    const outH = (d.outAmt / maxVal) * chartH;
+    ctx.fillStyle = '#16A34A';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(cx - barW - 2, chartH - inH, barW, inH, 3) : ctx.rect(cx - barW - 2, chartH - inH, barW, inH);
+    ctx.fill();
+    ctx.fillStyle = '#2563EB';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(cx + 2, chartH - outH, barW, outH, 3) : ctx.rect(cx + 2, chartH - outH, barW, outH);
+    ctx.fill();
+    ctx.fillStyle = '#93A3B8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(d.label, cx, cssH - 6);
+  });
+}
+
+function renderEarnings(){
+  renderWeekChart();
+  const today = todayStr();
+  const visitsToday = visits.filter(v => v.done && v.doneDate === today);
+  const tasksToday = tasks.filter(t => t.done && t.doneDate === today);
+  const manualInToday = earnings.filter(e => e.date === today);
+  const manualOutToday = payments.filter(p => p.date === today);
+
+  const todayIn = visitsToday.reduce((s,v)=>s+(Number(v.fee)||0), 0)
+                + tasksToday.reduce((s,t)=>s+(Number(t.fee)||0), 0)
+                + manualInToday.reduce((s,e)=>s+(Number(e.amount)||0), 0);
+  const todayOut = manualOutToday.reduce((s,p)=>s+(Number(p.amount)||0), 0);
+
+  document.getElementById('todayInAmt').textContent = fmtMoney(todayIn);
+  document.getElementById('todayOutAmt').textContent = fmtMoney(todayOut);
+
+  const allIn = visits.filter(v=>v.done).reduce((s,v)=>s+(Number(v.fee)||0),0)
+              + tasks.filter(t=>t.done).reduce((s,t)=>s+(Number(t.fee)||0),0)
+              + earnings.reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const allOut = payments.reduce((s,p)=>s+(Number(p.amount)||0),0);
+  const net = allIn - allOut;
+
+  const hero = document.getElementById('balanceHero');
+  hero.classList.toggle('negative', net < 0);
+  document.getElementById('netBalanceAmt').textContent = (net < 0 ? '-' : '') + fmtMoney(Math.abs(net));
+  document.getElementById('netBalanceSub').textContent = fmtMoney(allIn) + ' in · ' + fmtMoney(allOut) + ' out';
+
+  const wrap = document.getElementById('earnListWrap');
+  wrap.innerHTML = "";
+  const rows = [];
+  visits.filter(v=>v.done).forEach(v=>rows.push({amount:v.fee, name:v.name, meta:(v.task||'Visit')+' · '+(v.doneDate||''), color:colorForName(v.name), initial:(v.name[0]||'?').toUpperCase(), manual:false, out:false, sortKey:v.doneDate||''}));
+  tasks.filter(t=>t.done).forEach(t=>rows.push({amount:t.fee, name:t.title, meta:'Task · '+(t.doneDate||''), color:'#EAB308', initial:'✓', manual:false, out:false, sortKey:t.doneDate||''}));
+  earnings.forEach(e=>rows.push({amount:e.amount, name:e.note||'Money In', meta:'Added by hand · '+e.date, color:'#16A34A', initial:'💵', manual:true, out:false, id:e.id, sortKey:e.date||''}));
+  payments.forEach(p=>rows.push({amount:p.amount, name:p.note||'Money Out', meta:'Paid out · '+p.date, color:'#2563EB', initial:'💸', manual:true, out:true, id:p.id, sortKey:p.date||''}));
+
+  rows.sort((a,b)=> (b.sortKey).localeCompare(a.sortKey));
+
+  if(rows.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">💰</div><div class="msg">No money in or out recorded yet.</div></div>`;
+    return;
+  }
+
+  rows.slice(0,40).forEach(r=>{
+    if(!r.amount) return;
+    const row = document.createElement('div');
+    row.className = 'txn-row';
+    row.innerHTML = `
+      <div class="tavatar" style="background:${r.color};">${r.initial}</div>
+      <div class="tinfo">
+        <div class="tname">${escapeHtml(r.name)}</div>
+        <div class="tmeta">${escapeHtml(r.meta)}</div>
+      </div>
+      <div class="tamt ${r.out?'out':''}">${r.out?'−':'+'}${fmtMoney(r.amount)}</div>
+      ${r.manual ? `<button class="tdel" onclick="quickDeleteLedgerEntry('${r.id}', ${r.out})">🗑️</button>` : ''}
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function quickDeleteLedgerEntry(id, isOut){
+  showConfirmModal({
+    icon:'🗑️', title:'Delete this entry?', msg:'This cannot be undone.',
+    confirmText:'Delete', confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      if(isOut){ payments = payments.filter(x=>x.id!==id); savePayments(); }
+      else { earnings = earnings.filter(x=>x.id!==id); saveEarnings(); }
+      renderEarnings();
+    }
+  });
+}
+
+function setLedgerFormType(type){
+  currentLedgerFormType = type;
+  document.querySelectorAll('#ledgerTypeSeg button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-t')===type);
+  });
+  document.getElementById('earningFormTitle').textContent = editingEarningId
+    ? (type === 'in' ? 'Edit Money In' : 'Edit Money Out')
+    : (type === 'in' ? 'Add Money In' : 'Add Money Out');
+}
+
+function openAddLedgerForm(type){
+  editingEarningId = null;
+  editingLedgerType = type;
+  setLedgerFormType(type);
+  document.getElementById('earningDeleteBtn').style.display = 'none';
+  document.getElementById('e-amount').value = '';
+  document.getElementById('e-note').value = '';
+  document.getElementById('e-date').value = todayStr();
+  clearAllFieldErrors(['e-amount']);
+  showScreen('screen-earning-form');
+}
+
+function saveLedgerEntry(){
+  const amount = Number(document.getElementById('e-amount').value);
+  clearAllFieldErrors(['e-amount']);
+  if(!amount){ showFieldError('e-amount'); return; }
+  const data = {
+    amount,
+    note: document.getElementById('e-note').value.trim(),
+    date: document.getElementById('e-date').value || todayStr(),
+  };
+  const targetArr = currentLedgerFormType === 'in' ? earnings : payments;
+  if(editingEarningId){
+    const e = targetArr.find(x=>x.id===editingEarningId);
+    if(e) Object.assign(e, data);
+  } else {
+    targetArr.push(Object.assign({id:uid()}, data));
+  }
+  currentLedgerFormType === 'in' ? saveEarnings() : savePayments();
+  editingEarningId = null;
+  showScreen('screen-earnings');
+}
+
+function deleteLedgerEntry(){
+  showConfirmModal({
+    icon:'🗑️', title:'Delete this entry?', msg:'This cannot be undone.',
+    confirmText:'Delete', confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      if(editingLedgerType === 'in'){
+        earnings = earnings.filter(x=>x.id!==editingEarningId);
+        saveEarnings();
+      } else {
+        payments = payments.filter(x=>x.id!==editingEarningId);
+        savePayments();
+      }
+      editingEarningId = null;
+      showScreen('screen-earnings');
+    }
+  });
+}
+
+/* ===================== FOLDERS ===================== */
+function renderFolderList(){
+  const wrap = document.getElementById('folderListWrap');
+  wrap.innerHTML = "";
+  if(folders.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">🗂️</div><div class="msg">No folders yet.\nTap + to create one\n(e.g. a village or area name).</div></div>`;
+    return;
+  }
+  folders.forEach((f,i)=>{
+    const count = visits.filter(v=>v.folderId===f.id).length;
+    const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const card = document.createElement('div');
+    card.className = 'folder-card';
+    card.onclick = ()=>openFolderDetail(f.id);
+    card.innerHTML = `
+      <div class="folder-icon" style="background:${color}22; color:${color};">👥</div>
+      <div class="finfo">
+        <div class="fname">${escapeHtml(f.name)}</div>
+        <div class="fcount">${count} ${count===1?'Customer':'Customers'}</div>
+      </div>
+      <div class="farrow">›</div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+function openAddFolderForm(){
+  editingFolderId = null;
+  document.getElementById('folderFormTitle').textContent = "New " + curProf().folder;
+  document.getElementById('folderDeleteBtn').style.display = 'none';
+  document.getElementById('fold-name').value = '';
+  document.getElementById('fold-name').placeholder = curProf().folderNamePlaceholder;
+  clearFieldError('fold-name');
+  showScreen('screen-folder-form');
+}
+
+function saveFolder(){
+  const name = document.getElementById('fold-name').value.trim();
+  clearFieldError('fold-name');
+  if(!name){ showFieldError('fold-name'); return; }
+  if(editingFolderId){
+    const f = folders.find(x=>x.id===editingFolderId);
+    f.name = name;
+  } else {
+    folders.push({id:uid(), name});
+  }
+  saveFolders();
+  editingFolderId = null;
+  showScreen('screen-folders');
+}
+
+function deleteFolder(){
+  showConfirmModal({
+    icon:'🗑️', title:'Delete this ' + curProf().folder.toLowerCase() + '?',
+    msg:"People inside it will not be deleted, they'll just be removed from it.",
+    confirmText:'Delete', confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      visits.forEach(v=>{ if(v.folderId===editingFolderId) v.folderId = null; });
+      saveVisits();
+      folders = folders.filter(x=>x.id!==editingFolderId);
+      saveFolders();
+      editingFolderId = null;
+      showScreen('screen-folders');
+    }
+  });
+}
+
+function openFolderDetail(id){
+  openFolderId = id;
+  const f = folders.find(x=>x.id===id);
+  if(!f) return;
+  document.getElementById('folderDetailTitle').textContent = f.name;
+  const wrap = document.getElementById('folderDetailListWrap');
+  wrap.innerHTML = "";
+  const items = visits.filter(v=>v.folderId===id);
+  if(items.length === 0){
+    wrap.innerHTML = `<div class="empty"><div class="big-emoji">📭</div><div class="msg">No one in this folder yet.\nAdd or edit a visit and choose\nthis folder to put them here.</div></div>`;
+  } else {
+    items.forEach(v=>wrap.appendChild(buildVisitCard(v)));
+  }
+  showScreen('screen-folder-detail');
+}
+
+function editFolderOpen(){
+  if(!openFolderId) return;
+  const f = folders.find(x=>x.id===openFolderId);
+  if(!f) return;
+  editingFolderId = f.id;
+  document.getElementById('folderFormTitle').textContent = "Edit " + curProf().folder;
+  document.getElementById('folderDeleteBtn').style.display = 'block';
+  document.getElementById('fold-name').value = f.name;
+  document.getElementById('fold-name').placeholder = curProf().folderNamePlaceholder;
+  clearFieldError('fold-name');
+  showScreen('screen-folder-form');
+}
+
+/* ===================== PROFILE ===================== */
+function loadOwnerName(){ return localStorage.getItem(NAME_KEY) || "Munis"; }
+function loadOwnerTag(){ return localStorage.getItem(TAG_KEY) || "Goat & Sheep Doctor"; }
+function loadOwnerPhone(){ return localStorage.getItem(PHONE_KEY) || ""; }
+function loadOwnerPhoto(){ return localStorage.getItem(PHOTO_KEY) || ""; }
+function loadOwnerEmail(){ return localStorage.getItem(EMAIL_KEY) || ""; }
+function loadOwnerAddress(){ return localStorage.getItem(ADDR_KEY) || ""; }
+function loadOwnerGender(){ return localStorage.getItem(GENDER_KEY) || ""; }
+function loadOwnerDob(){ return localStorage.getItem(DOB_KEY) || ""; }
+
+function renderProfile(){
+  const name = loadOwnerName();
+  const business = loadBusinessName();
+  document.getElementById('profileName').textContent = business ? (name + ' · ' + business) : name;
+  document.getElementById('profilePhoneDisplay').textContent = loadOwnerPhone() || loadOwnerTag();
+
+  const photo = loadOwnerPhoto();
+  const wrap = document.getElementById('profilePhotoWrap');
+  if(photo){
+    wrap.innerHTML = `<img src="${photo}" alt="Profile"><div class="photo-badge">📷</div>`;
+    document.getElementById('reframeLink').style.display = 'block';
+  } else {
+    wrap.innerHTML = `<span id="profileInitial">${(name[0]||'M').toUpperCase()}</span><div class="photo-badge">📷</div>`;
+    document.getElementById('reframeLink').style.display = 'none';
+  }
+
+  renderQrList();
+}
+
+function editOwnerName(){
+  const current = loadOwnerName();
+  const next = prompt("What should we call you?", current);
+  if(next && next.trim()){
+    localStorage.setItem(NAME_KEY, next.trim());
+    renderHome();
+    renderProfile();
+  }
+}
+
+function handlePhotoFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    openPhotoCrop(e.target.result, function(croppedDataUrl){
+      localStorage.setItem(PHOTO_KEY, croppedDataUrl);
+      renderProfile();
+    });
+  };
+  reader.onerror = function(){ showErrorModal("Could not load that photo. Please try another one."); };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+function fillMyInfoForm(){
+  document.getElementById('info-name').value = loadOwnerName();
+  document.getElementById('info-tag').value = loadOwnerTag();
+  document.getElementById('info-business').value = loadBusinessName();
+  document.getElementById('info-email').value = loadOwnerEmail();
+  document.getElementById('info-phone').value = loadOwnerPhone();
+  document.getElementById('info-address').value = loadOwnerAddress();
+  document.getElementById('info-dob').value = loadOwnerDob();
+  pendingInfoGender = loadOwnerGender();
+  document.querySelectorAll('#infoGenderSeg button').forEach(b=>{
+    b.classList.toggle('active', b.getAttribute('data-g')===pendingInfoGender);
+  });
+  clearAllFieldErrors(['info-name','info-email','info-phone','info-tag']);
+}
+
+function saveMyInfo(){
+  const name = document.getElementById('info-name').value.trim();
+  const email = document.getElementById('info-email').value.trim();
+  const phone = document.getElementById('info-phone').value.trim();
+  const tag = document.getElementById('info-tag').value.trim();
+  const business = document.getElementById('info-business').value.trim();
+  const address = document.getElementById('info-address').value.trim();
+  const dob = document.getElementById('info-dob').value;
+
+  clearAllFieldErrors(['info-name','info-email','info-phone','info-tag']);
+  let ok = true;
+  if(!name){ showFieldError('info-name'); ok = false; }
+  if(!isValidEmail(email)){ showFieldError('info-email'); ok = false; }
+  if(!isValidPhone10(phone)){ showFieldError('info-phone'); ok = false; }
+  if(!tag){ showFieldError('info-tag'); ok = false; }
+  if(!ok) return;
+
+  localStorage.setItem(NAME_KEY, name);
+  localStorage.setItem(TAG_KEY, tag);
+  localStorage.setItem(BIZ_KEY, business);
+  localStorage.setItem(EMAIL_KEY, email);
+  localStorage.setItem(PHONE_KEY, phone);
+  localStorage.setItem(ADDR_KEY, address);
+  localStorage.setItem(GENDER_KEY, pendingInfoGender);
+  localStorage.setItem(DOB_KEY, dob);
+  showScreen('screen-profile');
+}
+
+/* ===================== QR CODES (USER-ADDED APPS) ===================== */
+function renderQrList(){
+  const wrap = document.getElementById('qrListWrap');
+  wrap.innerHTML = "";
+  qrCodes.forEach((q,i)=>{
+    const color = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const row = document.createElement('div');
+    row.className = 'qr-row';
+    row.onclick = ()=>openQrView(q.id);
+    row.innerHTML = `
+      <div class="qicon" style="background:${color};">${(q.name[0]||'Q').toUpperCase()}</div>
+      <div class="qname">${escapeHtml(q.name)}</div>
+      <div class="qarrow">›</div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function openAddQrForm(){
+  editingQrId = null;
+  pendingQrDataUrl = null;
+  document.getElementById('qr-name').value = '';
+  document.getElementById('qrPreviewWrap').style.display = 'none';
+  clearFieldError('qr-name');
+  showScreen('screen-qr-form');
+}
+
+function handleQrFilePreview(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    pendingQrDataUrl = e.target.result;
+    document.getElementById('qrPreviewImg').src = pendingQrDataUrl;
+    document.getElementById('qrPreviewWrap').style.display = 'block';
+    clearFieldError('qr-name');
+  };
+  reader.onerror = function(){ showErrorModal("Could not load that image. Please try another one."); };
+  reader.readAsDataURL(file);
+}
+
+function saveQrEntry(){
+  const name = document.getElementById('qr-name').value.trim();
+  clearFieldError('qr-name');
+  if(!name){ showFieldError('qr-name'); return; }
+  if(!pendingQrDataUrl){ showErrorModal("Please choose a QR code image first."); return; }
+  qrCodes.push({id:uid(), name, dataUrl: pendingQrDataUrl});
+  saveQrCodes();
+  pendingQrDataUrl = null;
+  showScreen('screen-profile');
+}
+
+function openQrView(id){
+  editingQrId = id;
+  const q = qrCodes.find(x=>x.id===id);
+  if(!q) return;
+  document.getElementById('qrViewTitle').textContent = q.name;
+  document.getElementById('qrViewImg').src = q.dataUrl;
+  document.getElementById('qrViewName').textContent = q.name;
+  showScreen('screen-qr-view');
+}
+
+function deleteQrEntry(){
+  if(!editingQrId) return;
+  showConfirmModal({
+    icon:'🗑️', title:'Delete this QR code?', msg:'This cannot be undone.',
+    confirmText:'Delete', confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      qrCodes = qrCodes.filter(x=>x.id!==editingQrId);
+      saveQrCodes();
+      editingQrId = null;
+      showScreen('screen-profile');
+    }
+  });
+}
+
+/* ===================== SETTINGS ===================== */
+function clearAllData(){
+  showConfirmModal({
+    icon:'⚠️', title:'Delete everything?',
+    msg:'This will permanently delete ALL visits, tasks, earnings, payments, folders, and QR codes from this phone. This cannot be undone.',
+    confirmText:'Continue', confirmClass:'btn-danger',
+    onConfirm: ()=>{
+      showConfirmModal({
+        icon:'⚠️', title:'Are you absolutely sure?',
+        msg:'This is your last chance to cancel. This cannot be undone.',
+        confirmText:'Yes, delete everything', confirmClass:'btn-danger',
+        onConfirm: ()=>{
+          [STORAGE_KEY,TASKS_KEY,EARNINGS_KEY,PAYMENTS_KEY,FOLDERS_KEY,QR_KEY].forEach(k=>localStorage.removeItem(k));
+          loadAll();
+          showQuickToast("✅ All data has been cleared.");
+          goTab('home');
+        }
+      });
+    }
+  });
+}
+
+/* ===================== BACKUP & RESTORE ===================== */
+const LAST_BACKUP_KEY = "workify_last_backup_at";
+
+function buildBackupObject(){
+  return {
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    visits, tasks, earnings, payments, folders, qrCodes,
+    ownerName: loadOwnerName(),
+    ownerTag: loadOwnerTag(),
+    ownerPhone: loadOwnerPhone(),
+    ownerPhoto: loadOwnerPhoto(),
+    ownerEmail: loadOwnerEmail(),
+    ownerAddress: loadOwnerAddress(),
+    ownerGender: loadOwnerGender(),
+    ownerDob: loadOwnerDob(),
+    businessName: loadBusinessName(),
+    profession: loadProfession(),
+  };
+}
+
+function markBackupDone(){
+  localStorage.setItem(LAST_BACKUP_KEY, Date.now().toString());
+  renderBackupStatus();
+}
+
+function renderBackupStatus(){
+  const el = document.getElementById('lastBackupText');
+  if(!el) return;
+  const last = Number(localStorage.getItem(LAST_BACKUP_KEY)) || 0;
+  if(!last){
+    el.textContent = "You haven't backed up yet — export one now to keep your data safe.";
+    return;
+  }
+  const days = Math.floor((Date.now() - last) / 86400000);
+  if(days === 0) el.textContent = "✅ Last backed up today.";
+  else if(days === 1) el.textContent = "✅ Last backed up yesterday.";
+  else el.textContent = (days > 7 ? "⚠️ " : "✅ ") + "Last backed up " + days + " days ago.";
+}
+
+function exportBackup(){
+  const backup = buildBackupObject();
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'workify-backup-' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+  markBackupDone();
+}
+
+async function shareBackup(){
+  const backup = buildBackupObject();
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const file = new File([blob], 'workify-backup-' + todayStr() + '.json', {type:'application/json'});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({
+        files:[file],
+        title:'Workify Backup',
+        text:'My Workify data backup — keep this safe.'
+      });
+      markBackupDone();
+    } else {
+      exportBackup();
+    }
+  }catch(e){
+    // user cancelled the share sheet — no action needed
+  }
+}
+
+function restoreBackup(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let data;
+    try{
+      data = JSON.parse(e.target.result);
+    }catch(err){
+      showConfirmModal({
+        icon:'⚠️', title:'Could not read file',
+        msg:"Please make sure it's a Workify backup (.json) file.",
+        confirmText:'OK', confirmClass:'btn-primary', showCancel:false, onConfirm:()=>{}
+      });
+      event.target.value = '';
+      return;
+    }
+    showConfirmModal({
+      icon:'⬆️', title:'Restore this backup?',
+      msg:'This will replace all current data on this phone with the backup file.',
+      confirmText:'Restore', confirmClass:'btn-danger',
+      onConfirm: ()=>{
+        visits = data.visits || [];
+        tasks = data.tasks || [];
+        earnings = data.earnings || [];
+        payments = data.payments || [];
+        folders = data.folders || [];
+        qrCodes = data.qrCodes || [];
+        saveVisits(); saveTasks(); saveEarnings(); savePayments(); saveFolders(); saveQrCodes();
+        if(data.ownerName) localStorage.setItem(NAME_KEY, data.ownerName);
+        if(data.ownerTag) localStorage.setItem(TAG_KEY, data.ownerTag);
+        if(data.ownerPhone) localStorage.setItem(PHONE_KEY, data.ownerPhone);
+        if(data.ownerPhoto) localStorage.setItem(PHOTO_KEY, data.ownerPhoto);
+        if(data.ownerEmail) localStorage.setItem(EMAIL_KEY, data.ownerEmail);
+        if(data.ownerAddress) localStorage.setItem(ADDR_KEY, data.ownerAddress);
+        if(data.ownerGender) localStorage.setItem(GENDER_KEY, data.ownerGender);
+        if(data.ownerDob) localStorage.setItem(DOB_KEY, data.ownerDob);
+        if(data.businessName) localStorage.setItem(BIZ_KEY, data.businessName);
+        if(data.profession) localStorage.setItem(PROFESSION_KEY, data.profession);
+        showQuickToast("✅ Backup restored successfully.");
+        goTab('home');
+      }
+    });
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ===================== INIT ===================== */
+setTheme(localStorage.getItem(THEME_KEY) || 'light');
+applyLanguage();
+history.replaceState({workifyHome:true}, '', location.href);
+
+window.addEventListener('popstate', function(){
+  if(document.getElementById('drawer').classList.contains('open')){
+    closeDrawer();
+    if(isAwayFromHome){
+      history.pushState({workifyAway:true}, '', location.href);
+    }
+    return;
+  }
+  if(isAwayFromHome){
+    isAwayFromHome = false;
+    suppressHistoryPush = true;
+    goTab('home');
+    suppressHistoryPush = false;
+  }
+  // If already on home (isAwayFromHome was false), do nothing extra —
+  // the browser's own back behavior (exit prompt) takes over here, only ever on the dashboard.
+});
+
+loadAll();
+
+const isOnboarded = localStorage.getItem(ONBOARD_KEY) === "1";
+if(isOnboarded){
+  applyProfessionLabels();
+  renderHome();
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  requestNotifPermission();
+  maybeShowDailyNotification();
+  setTimeout(maybeAskForTour, 3400);
+} else {
+  document.querySelector('.bottom-nav').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  showOnboardStep(1);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  });
+}
+
+/* ===================== FIX: BLANK SCREEN ON RESUME ===================== */
+// Android Chrome sometimes restores the page from bfcache (or freezes it)
+// when reopened from the Recent Apps switcher, leaving a blank screen.
+// Reloading whenever the page is restored from bfcache fixes this reliably.
+window.addEventListener('pageshow', function(event){
+  if(event.persisted){
+    window.location.reload();
+  }
+});
+
+// Fallback safety net: if the app was hidden for a while and comes back
+// visible but looks stuck, quietly refresh the data + current view
+// (only on read-only screens, never mid-form, so nothing typed is lost).
+let workifyHiddenAt = null;
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden'){
+    workifyHiddenAt = Date.now();
+  } else if(document.visibilityState === 'visible'){
+    const wasHiddenLong = workifyHiddenAt && (Date.now() - workifyHiddenAt) > 1500;
+    workifyHiddenAt = null;
+    if(!wasHiddenLong) return;
+    const activeEl = document.querySelector('.screen.active');
+    const safeToRefresh = activeEl && ['screen-home','screen-visits','screen-tasks','screen-earnings','screen-folders','screen-profile'].includes(activeEl.id);
+    if(safeToRefresh){
+      loadAll();
+      suppressHistoryPush = true;
+      showScreen(activeEl.id);
+      suppressHistoryPush = false;
+    }
+  }
+});
+
+setTimeout(function(){
+  const splash = document.getElementById('screen-splash');
+  splash.classList.add('fade-out');
+  setTimeout(function(){ splash.style.display = 'none'; }, 420);
+}, isOnboarded ? 3000 : 300);
+</script>
+</body>
+</html>
