@@ -1,0 +1,8 @@
+Copyright (c) 2026 Umar Sikandri
+
+All rights reserved.
+
+This source code is shared publicly for viewing and portfolio purposes only.
+No permission is granted to copy, modify, redistribute, sublicense,
+or use this software or its source code without explicit written
+permission from the author.
